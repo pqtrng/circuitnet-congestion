@@ -16,5 +16,7 @@ dataset:
 
 paths:
   raw_dir: "data/raw/circuitnet-n14"
+  bronze_dir: "data/bronze"
+  silver_dir: "data/silver"
   gold_dir: "data/gold"
   provenance: "data/provenance/circuitnet-n14.json"

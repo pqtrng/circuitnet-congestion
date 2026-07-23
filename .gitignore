@@ -27,3 +27,5 @@ mlflow.db
 # Data artifacts at repo root only (NOT src/.../data/ source code)
 /data/raw/
 /data/gold/
+/data/bronze/
+/data/silver/
