@@ -1,4 +1,4 @@
-.PHONY: setup lint test clean
+.PHONY: setup fmt lint test clean ci-status ci-watchls
 
 setup:
 	uv sync --extra dev
@@ -19,3 +19,9 @@ clean:
 	find . -type d -name __pycache__ -exec rm -rf {} +
 
 check: fmt lint test
+
+ci-status:
+	gh run list --workflow ci.yml --limit 5
+
+ci-watch:
+	gh run watch $$(gh run list --workflow ci.yml --limit 1 --json databaseId --jq '.[0].databaseId')
