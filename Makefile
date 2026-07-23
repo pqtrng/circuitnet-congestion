@@ -1,4 +1,4 @@
-.PHONY: setup fmt lint test clean ci-status ci-watch acquire bronze
+.PHONY: setup fmt lint test clean ci-status ci-watch acquire bronze silver
 
 setup:
 	uv sync --extra dev
@@ -31,3 +31,6 @@ acquire:
 
 bronze:
 	uv run python -m circuitnet_congestion.data.bronze --config configs/data.yaml
+
+silver:
+	uv run python -m circuitnet_congestion.data.silver --config configs/data.yaml
