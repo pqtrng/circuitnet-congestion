@@ -1,0 +1,25 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# IDE
+.idea/
+*.iml
+
+# Tool caches
+.pytest_cache/
+.ruff_cache/
+
+# Data & model artifacts (CircuitNet ~100-150GB, never committed)
+data/
+mlruns/
+mlflow.db
+*.pt
+*.ckpt
