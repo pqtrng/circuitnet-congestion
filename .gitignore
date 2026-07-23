@@ -18,8 +18,12 @@ wheels/
 .ruff_cache/
 
 # Data & model artifacts (CircuitNet ~100-150GB, never committed)
-data/
 mlruns/
 mlflow.db
 *.pt
 *.ckpt
+
+
+# Data artifacts at repo root only (NOT src/.../data/ source code)
+/data/raw/
+/data/gold/

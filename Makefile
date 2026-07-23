@@ -1,4 +1,4 @@
-.PHONY: setup fmt lint test clean ci-status ci-watchls
+.PHONY: setup fmt lint test clean ci-status ci-watch acquire
 
 setup:
 	uv sync --extra dev
@@ -25,3 +25,6 @@ ci-status:
 
 ci-watch:
 	gh run watch $$(gh run list --workflow ci.yml --limit 1 --json databaseId --jq '.[0].databaseId')
+
+acquire:
+	uv run python -m circuitnet_congestion.data.acquire --config configs/data.yaml

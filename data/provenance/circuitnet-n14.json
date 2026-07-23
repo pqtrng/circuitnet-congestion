@@ -1,0 +1,52 @@
+{
+  "designs": {
+    "test": [
+      "openc910-1"
+    ],
+    "train": [
+      "RISCY-FPU",
+      "RISCY",
+      "nvdla-large",
+      "zero-riscy"
+    ],
+    "val": [
+      "Vortex-large"
+    ]
+  },
+  "downloaded_at": "2026-07-23T14:45:44.189982+00:00",
+  "files": [
+    {
+      "path": "CircuitNet-N14/routability_features/RISCY-FPU.tar.gz",
+      "sha256": "c54a5998c7654c5cee2fc42c5a0543ea0cf5350ebd3b327a5635420ccb510455",
+      "size": 6295286066
+    },
+    {
+      "path": "CircuitNet-N14/routability_features/RISCY.tar.gz",
+      "sha256": "4e40b4ddabc223bd04417c9e61d7bb98d0f07ad6a59b574505b884da22b30d6f",
+      "size": 4925519091
+    },
+    {
+      "path": "CircuitNet-N14/routability_features/Vortex-large.tar.gz",
+      "sha256": "c53b67859cb0cc79a3b17b52f371d0c5c591b2dcaef0b7c8804706943bae506a",
+      "size": 2435656980
+    },
+    {
+      "path": "CircuitNet-N14/routability_features/nvdla-large.tar.gz",
+      "sha256": "69c83b2a26d6a77f4ed157d8d90e8e57b60aa96bdcf1db33b06e6cf7600e2ff6",
+      "size": 4462461331
+    },
+    {
+      "path": "CircuitNet-N14/routability_features/openc910-1.tar.gz",
+      "sha256": "cd6e16e5883d06fd92003f791b39169a2d82b5b474829ae3897dffdd4f54095b",
+      "size": 1866677672
+    },
+    {
+      "path": "CircuitNet-N14/routability_features/zero-riscy.tar.gz",
+      "sha256": "26aac0f6b2768587153eeae601bea83b56791fbb8d8d8507cb38b659ebfc7ea4",
+      "size": 3914477627
+    }
+  ],
+  "hf_repo_id": "CircuitNet/CircuitNet",
+  "hf_repo_type": "dataset",
+  "revision": "df74f33e302f927bf0548dc0d7936ca43b634f2a"
+}

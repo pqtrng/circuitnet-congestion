@@ -1,0 +1,20 @@
+dataset:
+  hf_repo_id: "CircuitNet/CircuitNet"
+  hf_repo_type: "dataset"
+  # 6 designs dùng cho split design-wise; bỏ nvdla-small & Vortex-small
+  # (small-variant cùng họ design -> tránh family leak giữa các split).
+  designs:
+    train:
+      - RISCY-FPU
+      - RISCY
+      - nvdla-large
+      - zero-riscy
+    val:
+      - Vortex-large
+    test:
+      - openc910-1
+
+paths:
+  raw_dir: "data/raw/circuitnet-n14"
+  gold_dir: "data/gold"
+  provenance: "data/provenance/circuitnet-n14.json"
