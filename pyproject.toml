@@ -13,10 +13,15 @@ dependencies = [
     "pandas>=3.0.5",
     "pandera>=0.32.1",
     "pyyaml>=6.0.3",
-    "torch>=2.5",
 ]
 
 [project.optional-dependencies]
+cpu = [
+    "torch>=2.5",
+]
+cuda = [
+    "torch>=2.5",
+]
 dev = [
     "pytest>=8",
     "ruff>=0.6",
@@ -28,14 +33,28 @@ build-backend = "uv_build"
 
 [tool.uv]
 index-strategy = "unsafe-best-match"
+conflicts = [
+    [
+        { extra = "cpu" },
+        { extra = "cuda" },
+    ],
+]
 
 [[tool.uv.index]]
-name = "pytorch-cu126"
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[[tool.uv.index]]
+name = "pytorch-accel"
 url = "https://download.pytorch.org/whl/cu126"
 explicit = true
 
 [tool.uv.sources]
-torch = { index = "pytorch-cu126" }
+torch = [
+    { index = "pytorch-cpu", extra = "cpu" },
+    { index = "pytorch-accel", extra = "cuda", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
+]
 
 [tool.ruff]
 line-length = 100

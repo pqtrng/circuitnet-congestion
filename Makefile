@@ -1,7 +1,11 @@
 .PHONY: setup fmt lint test clean ci-status ci-watch acquire bronze silver
 
 setup:
-	uv sync --extra dev
+	@if command -v nvidia-smi >/dev/null 2>&1; then \
+		uv sync --extra dev --extra cuda; \
+	else \
+		uv sync --extra dev --extra cpu; \
+	fi
 
 fmt:
 	uv run ruff format .

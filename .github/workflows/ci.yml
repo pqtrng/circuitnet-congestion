@@ -7,8 +7,6 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    env:
-      UV_TORCH_BACKEND: cpu
     steps:
       - uses: actions/checkout@v4
 
@@ -18,8 +16,8 @@ jobs:
       - name: Set up Python
         run: uv python install 3.12
 
-      - name: Sync (CPU torch)
-        run: uv sync --extra dev
+      - name: Sync
+        run: uv sync --extra dev --extra cpu
 
       - name: Lint
         run: |
