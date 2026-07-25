@@ -1,7 +1,6 @@
 # Data Engineering Decisions — CircuitNet-N14 Congestion Pipeline
 
 _Generated 2026-07-25 by `make report`. Every number below is produced from the
-_Generated 2026-07-25 by `make report`. Every number below is produced from the
 pipeline manifests, not written by hand._
 
 _The pipeline runs as `make acquire` → `make bronze` → `make silver` → `make gold`
