@@ -26,7 +26,7 @@ mlflow.db
 
 # Data artifacts at repo root only (NOT src/.../data/ source code)
 # Data artifacts at repo root only (NOT src/.../data/ source code)
-/data/raw/
+/data/raw
 /data/bronze/*
 /data/silver/*
 !/data/silver/manifest.json
