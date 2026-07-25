@@ -143,15 +143,20 @@ def build(config_path: Path) -> dict:
         apply_norm(gold_dir / split, stats)
 
     (gold_dir / "norm_stats.json").write_text(json.dumps(stats, indent=2, sort_keys=True) + "\n")
+    full = sum(1 for r in records if r.valid_frac == 1.0)
     manifest_out = {
         "patch_size": PATCH,
         "feature_keys": FEATURE_KEYS,
         "zscore_keys": ZSCORE_KEYS,
         "n_patches": len(records),
+        "n_full_patches": full,
+        "n_padded_patches": len(records) - full,
         "counts": {s: sum(1 for r in records if r.split == s) for s in ("train", "val", "test")},
         "patches": [asdict(r) for r in records],
     }
     (gold_dir / "manifest.json").write_text(json.dumps(manifest_out, indent=2) + "\n")
+    summary = {k: v for k, v in manifest_out.items() if k != "patches"}
+    (gold_dir / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
     print(f"patches: {manifest_out['counts']}")
     print(f"norm_stats: {stats}")
     return manifest_out

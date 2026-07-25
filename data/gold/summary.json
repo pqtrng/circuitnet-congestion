@@ -1,0 +1,20 @@
+{
+  "patch_size": 128,
+  "feature_keys": [
+    "cell_density",
+    "rudy",
+    "macro_region"
+  ],
+  "zscore_keys": [
+    "cell_density",
+    "rudy"
+  ],
+  "n_patches": 48002,
+  "counts": {
+    "train": 37704,
+    "val": 6641,
+    "test": 3657
+  },
+  "n_full_patches": 27617,
+  "n_padded_patches": 20385
+}
