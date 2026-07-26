@@ -297,14 +297,14 @@ def test_checkpoint_contents_follow_the_optimiser_flag(
         epoch=7,
         config=TrainConfig(run_name="x"),
         result=EvalResult(1.0, 2.0, 0.1, HotspotCounts()),
-        best_shared=1.0,
-        best_objective=2.0,
+        selection={"val_mse": 1.0, "val_objective": 2.0, "val_f1": 0.3},
         include_optimizer=include_optimizer,
     )
     payload = torch.load(path, map_location="cpu", weights_only=False)
 
     assert ("optimizer_state" in payload) is include_optimizer
     assert payload["epoch"] == 7
+    assert payload["selection"]["val_f1"] == 0.3
     assert entry["sha256"] == sha256_file(path)
     assert entry["bytes"] == path.stat().st_size
 
@@ -335,10 +335,13 @@ def test_training_run_writes_a_complete_record(tmp_path: Path, monkeypatch) -> N
         "learning_rate",
         "reproducibility",
         "checkpoints",
+        "selection",
     }
+    assert set(record["best"]) == {"val_mse", "val_objective", "val_f1"}
 
     checkpoints = record["checkpoints"]
     assert "best_val_mse.pt" in checkpoints
+    assert "best_val_f1.pt" in checkpoints
     assert "best_val_objective.pt" not in checkpoints
     for entry in checkpoints.values():
         assert len(entry["sha256"]) == 64
@@ -401,3 +404,64 @@ def test_resume_continues_the_history(tmp_path: Path, monkeypatch) -> None:
     epochs = [json.loads(line)["epoch"] for line in history]
 
     assert epochs == [1, 2, 3]
+
+
+def test_best_f1_checkpoint_is_not_overwritten_by_ties(tmp_path: Path, monkeypatch) -> None:
+    """Hotspot F1 is legitimately zero for many early epochs. A non-strict
+    comparison would rewrite the checkpoint on each of them and end up holding
+    the last epoch rather than the best one."""
+    gold = _write_gold(tmp_path)
+    config_path = _write_config(tmp_path, gold, epochs=3, name="ties")
+    monkeypatch.setattr(sys, "argv", ["train", "--config", str(config_path)])
+
+    train_module.main()
+    record = json.loads((tmp_path / "results" / "ties" / "run.json").read_text())
+
+    assert record["best"]["val_f1"] == 0.0
+    assert record["checkpoints"]["best_val_f1.pt"]["epoch"] == 1
+
+
+def test_periodic_checkpoints_are_written_and_recorded(tmp_path: Path, monkeypatch) -> None:
+    """Three retraining cycles were caused by a selection rule that was only
+    recognised as interesting after the run had finished."""
+    gold = _write_gold(tmp_path)
+    config_path = _write_config(tmp_path, gold, epochs=4, name="periodic")
+    config_path.write_text(
+        config_path.read_text().replace(
+            "  tensorboard_dir:", "  checkpoint_every: 2\n  tensorboard_dir:"
+        )
+    )
+    monkeypatch.setattr(sys, "argv", ["train", "--config", str(config_path)])
+
+    train_module.main()
+    record = json.loads((tmp_path / "results" / "periodic" / "run.json").read_text())
+    written = tmp_path / "results" / "periodic" / "checkpoints" / "periodic"
+
+    assert {"epoch_002.pt", "epoch_004.pt"} <= set(record["checkpoints"])
+    assert sorted(p.name for p in written.glob("*.pt")) == ["epoch_002.pt", "epoch_004.pt"]
+
+
+def test_resume_preserves_digests_from_earlier_sessions(tmp_path: Path, monkeypatch) -> None:
+    """The run record is rewritten at the end of every session. Weights are
+    excluded from the repository, so a digest dropped on resume leaves a file
+    on disk that no reported number can be traced back to."""
+    gold = _write_gold(tmp_path)
+    config_path = _write_config(tmp_path, gold, epochs=2, name="digests")
+    config_path.write_text(
+        config_path.read_text().replace(
+            "  tensorboard_dir:", "  checkpoint_every: 2\n  tensorboard_dir:"
+        )
+    )
+
+    monkeypatch.setattr(sys, "argv", ["train", "--config", str(config_path)])
+    train_module.main()
+
+    monkeypatch.setattr(
+        sys, "argv", ["train", "--config", str(config_path), "--epochs", "3", "--resume"]
+    )
+    train_module.main()
+
+    record = json.loads((tmp_path / "results" / "digests" / "run.json").read_text())
+
+    assert "epoch_002.pt" in record["checkpoints"]
+    assert record["checkpoints"]["last.pt"]["epoch"] == 3

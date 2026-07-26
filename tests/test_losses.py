@@ -93,10 +93,19 @@ def test_hotspot_weight_is_binary_and_target_driven() -> None:
     assert weight.flatten().tolist() == [1.0, 1.0, 1.0, DEFAULT_POSITIVE_WEIGHT]
 
 
-def test_hotspot_threshold_sits_between_two_quantisation_levels() -> None:
-    """Targets are routing overflow over track capacity, so they land on a grid
-    of small-denominator fractions. The threshold must not coincide with one."""
-    assert 2 / 44 < DEFAULT_HOTSPOT_THRESHOLD < 3 / 44
+def test_hotspot_threshold_is_a_level_excluded_by_a_strict_comparison() -> None:
+    """A hotspot is a cell exceeding its track capacity by more than five
+    percent. Levels around 0.05 are dense -- between three hundred and six
+    hundred distinct non-zero values occur per split -- so no threshold sits in
+    a meaningful gap. The level 1/20 is exactly five percent and the strict
+    comparison excludes it, deliberately. Both round to the same
+    single-precision value, so the boundary does not depend on rounding."""
+    level = torch.tensor([1 / 20], dtype=torch.float32)
+    threshold = torch.tensor([DEFAULT_HOTSPOT_THRESHOLD], dtype=torch.float32)
+
+    assert float(level) == float(threshold)
+    assert not bool(level > DEFAULT_HOTSPOT_THRESHOLD)
+    assert bool(torch.tensor([1 / 19], dtype=torch.float32) > DEFAULT_HOTSPOT_THRESHOLD)
 
 
 def test_weighted_loss_reduces_to_plain_mse_at_unit_weight() -> None:

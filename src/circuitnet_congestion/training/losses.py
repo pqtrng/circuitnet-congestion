@@ -22,8 +22,17 @@ Target distribution, measured on the train split over valid pixels only:
 
 Targets are quantised: they are routing overflow divided by track capacity, so
 they take fractional values with small denominators that vary by design and
-metal layer (1/44, 1/34, 2/43, 3/44, ...). The hotspot threshold below is placed
-between two adjacent grid levels for that reason.
+metal layer. Across the three splits there are between three hundred and six
+hundred distinct non-zero levels, and around 0.05 they are dense enough that no
+threshold sits in a meaningful gap between neighbours.
+
+The threshold is therefore defined physically rather than geometrically: a
+hotspot is a cell whose routing demand exceeds its track capacity by more than
+five percent. The level 1/20 is exactly five percent and is excluded by the
+strict comparison, which is deliberate rather than incidental. Both the level
+and the constant round to the same single-precision value, so the boundary is
+deterministic. Roughly two percent of positive pixels sit on it, which is why
+evaluation reports a range of thresholds rather than a single number.
 
 Two objectives are provided because plain squared error fails on this
 distribution in a specific and measurable way. Squaring already amplifies large

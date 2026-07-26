@@ -35,3 +35,4 @@ eval:
 output:
   results_dir: results
   tensorboard_dir: runs
+  checkpoint_every: 5

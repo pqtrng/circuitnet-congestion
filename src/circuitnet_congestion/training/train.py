@@ -17,16 +17,20 @@ single precision on accelerators without dedicated matrix units. Targets sit
 around 1e-2 and squared errors reach 1e-6, which is the bottom of half
 precision's dynamic range.
 
-Both objectives are evaluated on both validation metrics regardless of which one
-is being trained, otherwise the two runs cannot be placed in the same table.
-Early stopping also tracks the shared metric for both, so that a difference in
-epoch count between runs never reflects a difference in stopping rule.
+Three selection rules are recorded per run rather than one, because a
+superseded run showed they disagree sharply. Selecting on validation error
+picked epoch 5, whose hotspot F1 was 0.0008; selecting on F1 picked epoch 44,
+whose F1 was 0.0367, forty-four times higher, and whose validation error was
+1.03 times the error of predicting zero everywhere. The model that detects
+hotspots best is one that squared error rates as worse than making no
+prediction at all. Reporting a single rule would therefore report a choice
+rather than a result.
 
-Two checkpoints are kept when the objective differs from the selection metric.
-The one selected on the shared metric supports the main comparison; the one
-selected on the run's own objective supports a sensitivity line beside it.
-Selecting the weighted run on a metric it does not optimise would catch it
-before it specialises, which is precisely the axis the comparison is about.
+Checkpoints are also written on a fixed interval. Three separate retraining
+cycles have been caused by a selection rule that was only recognised as
+interesting after the run finished. Periodic weights cost storage that is
+excluded from the repository anyway, and they let evaluation examine any rule
+without spending another training budget.
 """
 
 from __future__ import annotations
@@ -75,6 +79,7 @@ SHRINKAGE_WARNING_EPOCH = 5
 
 CHECKPOINT_BEST_SHARED = "best_val_mse.pt"
 CHECKPOINT_BEST_OBJECTIVE = "best_val_objective.pt"
+CHECKPOINT_BEST_F1 = "best_val_f1.pt"
 CHECKPOINT_LAST = "last.pt"
 
 RUN_RECORD = "run.json"
@@ -145,8 +150,16 @@ class EvalConfig:
 
 @dataclass(frozen=True)
 class OutputConfig:
+    """``checkpoint_every`` of zero or less disables periodic checkpoints.
+
+    Keeping weights on a fixed interval costs storage that is excluded from the
+    repository in any case, and it removes the need to retrain when evaluation
+    turns out to need a selection rule that was not anticipated.
+    """
+
     results_dir: str = "results"
     tensorboard_dir: str = "runs"
+    checkpoint_every: int = 5
 
 
 @dataclass(frozen=True)
@@ -200,8 +213,7 @@ def load_config(path: Path) -> TrainConfig:
 def replace_top_level(config: TrainConfig, **overrides: Any) -> TrainConfig:
     """Replace top-level fields while preserving the nested dataclasses.
 
-    dataclasses.replace would be equivalent, but asdict-based copying would
-    flatten the sections into plain dictionaries.
+    Copying through asdict would flatten the sections into plain dictionaries.
     """
     current = {f.name: getattr(config, f.name) for f in fields(config)}
     return TrainConfig(**{**current, **overrides})
@@ -394,8 +406,7 @@ def save_checkpoint(
     epoch: int,
     config: TrainConfig,
     result: EvalResult,
-    best_shared: float,
-    best_objective: float,
+    selection: dict[str, float],
     include_optimizer: bool = True,
 ) -> dict[str, Any]:
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -404,8 +415,7 @@ def save_checkpoint(
         "model_state": model.state_dict(),
         "config": asdict(config),
         "metrics": result.as_record(),
-        "best_shared": best_shared,
-        "best_objective": best_objective,
+        "selection": selection,
     }
     if include_optimizer:
         # Only the resume checkpoint carries optimiser moments. They are twice
@@ -492,7 +502,7 @@ def main() -> None:
     loss_fn = config.loss.build()
 
     # The plain objective and the shared selection metric are the same quantity,
-    # so only the weighted run needs a second checkpoint.
+    # so only the weighted run needs a separate objective checkpoint.
     tracks_separate_objective = isinstance(loss_fn, MaskedWeightedMSELoss)
 
     results_dir = Path(config.output.results_dir) / config.run_name
@@ -503,7 +513,11 @@ def main() -> None:
     start_epoch = 1
     best_shared = float("inf")
     best_objective = float("inf")
+    # F1 is maximised, and it is legitimately zero for the first epochs, so the
+    # initial value has to be below any attainable score rather than above it.
+    best_f1 = -1.0
     last_path = checkpoint_dir / CHECKPOINT_LAST
+    checkpoints: dict[str, dict[str, Any]] = {}
 
     if args.resume:
         if not last_path.exists():
@@ -512,8 +526,17 @@ def main() -> None:
         model.load_state_dict(state["model_state"])
         optimizer.load_state_dict(state["optimizer_state"])
         start_epoch = int(state["epoch"]) + 1
-        best_shared = float(state["best_shared"])
-        best_objective = float(state["best_objective"])
+        selection = state["selection"]
+        best_shared = float(selection["val_mse"])
+        best_objective = float(selection["val_objective"])
+        best_f1 = float(selection["val_f1"])
+
+        prior_record = results_dir / RUN_RECORD
+        if prior_record.exists():
+            # Digests written in earlier sessions describe files still on disk.
+            # Dropping them would leave those weights unattributed, and the
+            # digest is the only link between a reported number and its weights.
+            checkpoints = json.loads(prior_record.read_text()).get("checkpoints", {})
         print(f"resumed from epoch {state['epoch']}")
     elif history_path.exists():
         history_path.unlink()
@@ -552,19 +575,24 @@ def main() -> None:
             ),
             "reproducibility": (
                 "Seeded, but autotuned convolution selection means results are "
-                "reproducible in distribution rather than bitwise."
+                "reproducible in distribution rather than bitwise. A single seed was "
+                "run, so no claim is made about variance across seeds."
             ),
             "checkpoints": (
                 "Weights are excluded from the repository; the digests below are the "
                 "link between these numbers and the weights that produced them."
             ),
+            "selection": (
+                "Three selection rules are recorded because they disagree. Reporting "
+                "one of them would report a choice rather than a result."
+            ),
         },
     }
     (results_dir / RUN_RECORD).write_text(json.dumps(record, indent=2) + "\n")
 
-    checkpoints: dict[str, dict[str, Any]] = {}
     epochs_without_improvement = 0
     stopped_early = False
+    shrinkage_warned = False
     started = time.perf_counter()
     last_epoch = start_epoch - 1
 
@@ -605,9 +633,24 @@ def main() -> None:
         writer.add_scalar("throughput/ms_per_image", ms_per_image, epoch)
 
         objective = result.weighted_mse if tracks_separate_objective else result.mse
+        # Strict comparisons, evaluated before the running bests are updated.
+        # A tie must not overwrite: hotspot F1 is legitimately zero for many
+        # early epochs, and a non-strict test would rewrite the checkpoint on
+        # every one of them and end up holding the latest rather than the best.
+        improved_shared = result.mse < best_shared
+        improved_objective = objective < best_objective
+        improved_f1 = result.counts.f1 > best_f1
 
-        if result.mse < best_shared:
-            best_shared = result.mse
+        best_shared = min(best_shared, result.mse)
+        best_objective = min(best_objective, objective)
+        best_f1 = max(best_f1, result.counts.f1)
+        selection = {
+            "val_mse": best_shared,
+            "val_objective": best_objective,
+            "val_f1": best_f1,
+        }
+
+        if improved_shared:
             epochs_without_improvement = 0
             checkpoints[CHECKPOINT_BEST_SHARED] = save_checkpoint(
                 checkpoint_dir / CHECKPOINT_BEST_SHARED,
@@ -616,27 +659,48 @@ def main() -> None:
                 epoch=epoch,
                 config=config,
                 result=result,
-                best_shared=best_shared,
-                best_objective=best_objective,
+                selection=selection,
                 include_optimizer=False,
             )
         else:
             epochs_without_improvement += 1
 
-        if objective < best_objective:
-            best_objective = objective
-            if tracks_separate_objective:
-                checkpoints[CHECKPOINT_BEST_OBJECTIVE] = save_checkpoint(
-                    checkpoint_dir / CHECKPOINT_BEST_OBJECTIVE,
-                    model=model,
-                    optimizer=optimizer,
-                    epoch=epoch,
-                    config=config,
-                    result=result,
-                    best_shared=best_shared,
-                    best_objective=best_objective,
-                    include_optimizer=False,
-                )
+        if tracks_separate_objective and improved_objective:
+            checkpoints[CHECKPOINT_BEST_OBJECTIVE] = save_checkpoint(
+                checkpoint_dir / CHECKPOINT_BEST_OBJECTIVE,
+                model=model,
+                optimizer=optimizer,
+                epoch=epoch,
+                config=config,
+                result=result,
+                selection=selection,
+                include_optimizer=False,
+            )
+
+        if improved_f1:
+            checkpoints[CHECKPOINT_BEST_F1] = save_checkpoint(
+                checkpoint_dir / CHECKPOINT_BEST_F1,
+                model=model,
+                optimizer=optimizer,
+                epoch=epoch,
+                config=config,
+                result=result,
+                selection=selection,
+                include_optimizer=False,
+            )
+
+        if config.output.checkpoint_every > 0 and epoch % config.output.checkpoint_every == 0:
+            name = f"epoch_{epoch:03d}.pt"
+            checkpoints[name] = save_checkpoint(
+                checkpoint_dir / "periodic" / name,
+                model=model,
+                optimizer=optimizer,
+                epoch=epoch,
+                config=config,
+                result=result,
+                selection=selection,
+                include_optimizer=False,
+            )
 
         checkpoints[CHECKPOINT_LAST] = save_checkpoint(
             last_path,
@@ -645,14 +709,13 @@ def main() -> None:
             epoch=epoch,
             config=config,
             result=result,
-            best_shared=best_shared,
-            best_objective=best_objective,
+            selection=selection,
         )
 
         print(
             f"epoch {epoch:3d}/{config.optim.epochs}  train={train_loss:.6e}  "
             f"val_mse={result.mse:.6e}  val_wmse={result.weighted_mse:.6e}  "
-            f"pred_max={result.prediction_max:.4f}  recall={result.counts.recall:.3f}  "
+            f"pred_max={result.prediction_max:.4f}  f1={result.counts.f1:.4f}  "
             f"{train_seconds:.1f}s ({ms_per_image:.2f} ms/img)"
         )
 
@@ -665,9 +728,11 @@ def main() -> None:
             )
 
         if (
-            result.prediction_max < config.eval.hotspot_threshold
+            not shrinkage_warned
             and epoch >= SHRINKAGE_WARNING_EPOCH
+            and result.prediction_max < config.eval.hotspot_threshold
         ):
+            shrinkage_warned = True
             print(
                 f"  warning: no predicted pixel has crossed {config.eval.hotspot_threshold} "
                 f"after {epoch} epochs. The model may have collapsed to the conditional "
@@ -687,11 +752,15 @@ def main() -> None:
         "stopped_early": stopped_early,
         "wall_seconds": time.perf_counter() - started,
     }
-    record["best"] = {"val_mse": best_shared, "val_objective": best_objective}
+    record["best"] = {
+        "val_mse": best_shared,
+        "val_objective": best_objective,
+        "val_f1": best_f1,
+    }
     record["checkpoints"] = checkpoints
     (results_dir / RUN_RECORD).write_text(json.dumps(record, indent=2) + "\n")
 
-    print(f"best val_mse={best_shared:.6e}  baseline={baseline:.6e}")
+    print(f"best val_mse={best_shared:.6e}  best val_f1={best_f1:.4f}  baseline={baseline:.6e}")
     print(f"record written to {results_dir / RUN_RECORD}")
 
 
