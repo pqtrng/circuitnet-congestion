@@ -40,3 +40,6 @@ runs/
 
 # Smoke runs from --limit: throwaway, never reported.
 results/smoke_*/
+
+# Training logs from nohup: console output, not results.
+*.log
