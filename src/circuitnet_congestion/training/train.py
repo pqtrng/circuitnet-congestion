@@ -119,9 +119,20 @@ class LossConfig:
 
 @dataclass(frozen=True)
 class OptimConfig:
+    """A patience of zero or less disables early stopping.
+
+    At this scale no validation metric provides a usable stopping signal.
+    Validation error fluctuates around a flat level from the first epoch while
+    the training objective is still descending, so a patience counter measures
+    noise and halts at an arbitrary point: in the superseded runs it selected a
+    noise minimum for the plain objective and cut the weighted run short while
+    its hotspot recall was still climbing. A fixed budget with the whole
+    trajectory recorded is the honest alternative.
+    """
+
     lr: float = 3e-4
     epochs: int = 60
-    patience: int = 12
+    patience: int = 0
 
 
 @dataclass(frozen=True)
@@ -663,7 +674,7 @@ def main() -> None:
                 f"mean, which minimises squared error while detecting nothing."
             )
 
-        if epochs_without_improvement >= config.optim.patience:
+        if config.optim.patience > 0 and epochs_without_improvement >= config.optim.patience:
             stopped_early = True
             print(f"early stop: no improvement in {config.optim.patience} epochs")
             break

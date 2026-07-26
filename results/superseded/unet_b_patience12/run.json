@@ -1,0 +1,90 @@
+{
+  "run_name": "unet_b",
+  "smoke": false,
+  "started_utc": "2026-07-26T07:05:59Z",
+  "git": {
+    "revision": "7dd204e0319226053a7f7f7f6839113ad23aaacd",
+    "dirty": true
+  },
+  "config": {
+    "run_name": "unet_b",
+    "seed": 42,
+    "data": {
+      "gold_dir": "data/gold",
+      "batch_size": 32,
+      "num_workers": 4
+    },
+    "model": {
+      "in_channels": 3,
+      "base_channels": 32,
+      "depth": 4
+    },
+    "loss": {
+      "name": "masked_weighted_mse",
+      "threshold": 0.05,
+      "positive_weight": 10.0
+    },
+    "optim": {
+      "lr": 0.0003,
+      "epochs": 60,
+      "patience": 12
+    },
+    "eval": {
+      "hotspot_threshold": 0.05,
+      "positive_weight": 10.0
+    },
+    "output": {
+      "results_dir": "results",
+      "tensorboard_dir": "runs"
+    }
+  },
+  "environment": {
+    "python": "3.12.13",
+    "torch": "2.13.0+cu126",
+    "device_type": "cuda",
+    "accelerator_memory_gib": 5.99969482421875
+  },
+  "model": {
+    "parameters": 7849601
+  },
+  "data": {
+    "train_patches": 37704,
+    "val_patches": 6641
+  },
+  "baseline": {
+    "val_zero_predictor_mse": 1.29870199355839e-05
+  },
+  "notes": {
+    "epoch_budget": "The epoch count is a time budget that fits two runs in one session, not a convergence criterion.",
+    "learning_rate": "Fixed. Chosen from the scale of the targets and never tuned against this dataset, so it is not claimed to be optimal.",
+    "reproducibility": "Seeded, but autotuned convolution selection means results are reproducible in distribution rather than bitwise.",
+    "checkpoints": "Weights are excluded from the repository; the digests below are the link between these numbers and the weights that produced them."
+  },
+  "completed_utc": "2026-07-26T08:14:46Z",
+  "training": {
+    "epochs_run": 20,
+    "stopped_early": true,
+    "wall_seconds": 4126.4027912090005
+  },
+  "best": {
+    "val_mse": 1.5318225969854012e-05,
+    "val_objective": 6.613676993214813e-05
+  },
+  "checkpoints": {
+    "best_val_mse.pt": {
+      "epoch": 8,
+      "bytes": 31461863,
+      "sha256": "db412c7dd069a3fd6a42bfba631c8f36b285cd52ed154cf2cc00590583a3d316"
+    },
+    "best_val_objective.pt": {
+      "epoch": 7,
+      "bytes": 31462559,
+      "sha256": "91157daa4eaa733133a7764e8c10a0ea37f0a30b4f32bb809645cbaa0e8b3e49"
+    },
+    "last.pt": {
+      "epoch": 20,
+      "bytes": 94291967,
+      "sha256": "292d168f1886711080d9bbb1152adc6b9ac07efe00dd59cd490fbc8e9f64bfea"
+    }
+  }
+}

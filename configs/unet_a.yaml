@@ -22,7 +22,7 @@ loss:
 optim:
   lr: 3.0e-4
   epochs: 60
-  patience: 12
+  patience: 0
 
 eval:
   hotspot_threshold: 0.05

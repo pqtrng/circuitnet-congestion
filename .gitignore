@@ -43,3 +43,6 @@ results/smoke_*/
 
 # Training logs from nohup: console output, not results.
 *.log
+
+# Superseded runs are evidence for the decision record; keep their logs.
+!results/superseded/*.log

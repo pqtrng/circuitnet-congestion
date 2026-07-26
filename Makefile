@@ -1,4 +1,4 @@
-.PHONY: setup fmt lint test check clean ci-status ci-watch acquire bronze silver gold report train
+.PHONY: setup fmt lint test check clean ci-status ci-watch acquire bronze silver gold report train board
 
 CONFIG ?= configs/unet_a.yaml
 
@@ -49,3 +49,6 @@ report:
 
 train:
 	uv run python -m circuitnet_congestion.training.train --config $(CONFIG)
+
+board:
+	uv run tensorboard --logdir runs --port 6006 --bind_all

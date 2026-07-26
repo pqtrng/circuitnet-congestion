@@ -1,0 +1,49 @@
+run=unet_a device=cuda loss=MaskedMSELoss(reduction=global_masked_mean) train=37704 val=6641 params=7,849,601
+zero-predictor validation error over the whole split: 1.298702e-05
+epoch   1/60  train=2.847550e-05  val_mse=1.285420e-05  val_wmse=6.566026e-05  pred_max=0.0552  recall=0.000  205.3s (5.44 ms/img)
+epoch   2/60  train=2.704909e-05  val_mse=1.236229e-05  val_wmse=6.591232e-05  pred_max=0.0582  recall=0.000  198.3s (5.26 ms/img)
+epoch   3/60  train=2.668875e-05  val_mse=1.271809e-05  val_wmse=6.620190e-05  pred_max=0.0709  recall=0.001  198.5s (5.26 ms/img)
+epoch   4/60  train=2.665906e-05  val_mse=1.317552e-05  val_wmse=6.802804e-05  pred_max=0.0178  recall=0.000  194.7s (5.16 ms/img)
+epoch   5/60  train=2.716599e-05  val_mse=1.238583e-05  val_wmse=6.586852e-05  pred_max=0.0621  recall=0.001  192.7s (5.11 ms/img)
+epoch   6/60  train=2.566750e-05  val_mse=1.230167e-05  val_wmse=6.626362e-05  pred_max=0.0461  recall=0.000  191.3s (5.07 ms/img)
+  warning: no predicted pixel has crossed 0.05 after 6 epochs. The model may have collapsed to the conditional mean, which minimises squared error while detecting nothing.
+epoch   7/60  train=2.511253e-05  val_mse=1.258784e-05  val_wmse=6.560204e-05  pred_max=0.0842  recall=0.004  189.0s (5.01 ms/img)
+epoch   8/60  train=2.578212e-05  val_mse=1.244888e-05  val_wmse=6.577395e-05  pred_max=0.0816  recall=0.003  189.0s (5.01 ms/img)
+epoch   9/60  train=2.487569e-05  val_mse=1.241970e-05  val_wmse=6.542894e-05  pred_max=0.0851  recall=0.003  189.1s (5.01 ms/img)
+epoch  10/60  train=2.418036e-05  val_mse=1.237823e-05  val_wmse=6.571094e-05  pred_max=0.0786  recall=0.003  189.0s (5.01 ms/img)
+epoch  11/60  train=2.372527e-05  val_mse=1.272196e-05  val_wmse=6.533190e-05  pred_max=0.0874  recall=0.007  189.1s (5.02 ms/img)
+epoch  12/60  train=2.335267e-05  val_mse=1.252090e-05  val_wmse=6.542769e-05  pred_max=0.0939  recall=0.006  189.0s (5.01 ms/img)
+epoch  13/60  train=2.360051e-05  val_mse=1.265722e-05  val_wmse=6.535980e-05  pred_max=0.0864  recall=0.005  189.2s (5.02 ms/img)
+epoch  14/60  train=2.277900e-05  val_mse=1.261338e-05  val_wmse=6.575908e-05  pred_max=0.0923  recall=0.006  189.0s (5.01 ms/img)
+epoch  15/60  train=2.301883e-05  val_mse=1.271234e-05  val_wmse=6.637417e-05  pred_max=0.0715  recall=0.002  189.0s (5.01 ms/img)
+epoch  16/60  train=2.327668e-05  val_mse=1.290290e-05  val_wmse=6.573377e-05  pred_max=0.1074  recall=0.013  196.7s (5.22 ms/img)
+epoch  17/60  train=2.213132e-05  val_mse=1.246331e-05  val_wmse=6.571144e-05  pred_max=0.0926  recall=0.005  192.8s (5.11 ms/img)
+epoch  18/60  train=2.180506e-05  val_mse=1.246219e-05  val_wmse=6.565340e-05  pred_max=0.0928  recall=0.007  191.2s (5.07 ms/img)
+early stop: no improvement in 12 epochs
+best val_mse=1.230167e-05  baseline=1.298702e-05
+record written to results/unet_a/run.json
+run=unet_b device=cuda loss=MaskedWeightedMSELoss(threshold=0.05, positive_weight=10.0, reduction=global_masked_mean) train=37704 val=6641 params=7,849,601
+zero-predictor validation error over the whole split: 1.298702e-05
+epoch   1/60  train=1.700980e-04  val_mse=1.832114e-05  val_wmse=6.852087e-05  pred_max=0.0771  recall=0.010  199.9s (5.30 ms/img)
+epoch   2/60  train=1.572573e-04  val_mse=1.654232e-05  val_wmse=6.643667e-05  pred_max=0.1103  recall=0.041  189.9s (5.04 ms/img)
+epoch   3/60  train=1.524246e-04  val_mse=1.913533e-05  val_wmse=6.983996e-05  pred_max=0.1325  recall=0.044  189.4s (5.02 ms/img)
+epoch   4/60  train=1.486198e-04  val_mse=1.647047e-05  val_wmse=6.632373e-05  pred_max=0.1060  recall=0.045  209.5s (5.56 ms/img)
+epoch   5/60  train=1.425980e-04  val_mse=1.605472e-05  val_wmse=6.644956e-05  pred_max=0.1137  recall=0.043  204.8s (5.43 ms/img)
+epoch   6/60  train=1.433410e-04  val_mse=1.809501e-05  val_wmse=6.933383e-05  pred_max=0.1140  recall=0.027  195.5s (5.19 ms/img)
+epoch   7/60  train=1.404210e-04  val_mse=1.558584e-05  val_wmse=6.613677e-05  pred_max=0.1182  recall=0.049  189.4s (5.02 ms/img)
+epoch   8/60  train=1.326235e-04  val_mse=1.531823e-05  val_wmse=6.681698e-05  pred_max=0.2401  recall=0.034  191.1s (5.07 ms/img)
+epoch   9/60  train=1.312907e-04  val_mse=1.970736e-05  val_wmse=6.939639e-05  pred_max=0.1749  recall=0.064  203.4s (5.40 ms/img)
+epoch  10/60  train=1.287816e-04  val_mse=1.774825e-05  val_wmse=6.764484e-05  pred_max=0.2569  recall=0.069  196.4s (5.21 ms/img)
+epoch  11/60  train=1.233279e-04  val_mse=1.814151e-05  val_wmse=6.710595e-05  pred_max=0.2219  recall=0.081  188.2s (4.99 ms/img)
+epoch  12/60  train=1.278974e-04  val_mse=1.880545e-05  val_wmse=6.859752e-05  pred_max=0.4188  recall=0.071  197.0s (5.22 ms/img)
+epoch  13/60  train=1.207212e-04  val_mse=2.114177e-05  val_wmse=7.056276e-05  pred_max=0.5511  recall=0.078  188.9s (5.01 ms/img)
+epoch  14/60  train=1.160546e-04  val_mse=1.773095e-05  val_wmse=6.747799e-05  pred_max=0.4946  recall=0.077  191.4s (5.08 ms/img)
+epoch  15/60  train=1.154263e-04  val_mse=1.743412e-05  val_wmse=6.773373e-05  pred_max=0.5414  recall=0.065  198.3s (5.26 ms/img)
+epoch  16/60  train=1.127807e-04  val_mse=1.806765e-05  val_wmse=6.733909e-05  pred_max=0.5792  recall=0.094  191.0s (5.06 ms/img)
+epoch  17/60  train=1.091066e-04  val_mse=1.711981e-05  val_wmse=6.771106e-05  pred_max=0.6013  recall=0.054  190.4s (5.05 ms/img)
+epoch  18/60  train=1.082001e-04  val_mse=1.990959e-05  val_wmse=6.963510e-05  pred_max=0.8059  recall=0.087  190.7s (5.06 ms/img)
+epoch  19/60  train=1.064596e-04  val_mse=1.380083e-04  val_wmse=1.860903e-04  pred_max=0.8395  recall=0.109  190.2s (5.04 ms/img)
+epoch  20/60  train=1.059458e-04  val_mse=1.647057e-05  val_wmse=6.685558e-05  pred_max=0.7316  recall=0.068  190.6s (5.06 ms/img)
+early stop: no improvement in 12 epochs
+best val_mse=1.531823e-05  baseline=1.298702e-05
+record written to results/unet_b/run.json
