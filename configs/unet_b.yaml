@@ -1,0 +1,37 @@
+# Variant B: masked squared error with a binary class weight on hotspot pixels.
+#
+# The weight is binary rather than proportional to the target. positive_weight
+# solves w*p*y/(w*p+1-p) > threshold for a pixel that is a hotspot with
+# probability 0.3 and value 0.07, the point at which the conditional-mean
+# optimum clears the threshold instead of sitting below it. threshold lies
+# between the quantisation levels 2/44 and 3/44.
+run_name: unet_b
+seed: 42
+
+data:
+  gold_dir: data/gold
+  batch_size: 32
+  num_workers: 4
+
+model:
+  in_channels: 3
+  base_channels: 32
+  depth: 4
+
+loss:
+  name: masked_weighted_mse
+  threshold: 0.05
+  positive_weight: 10.0
+
+optim:
+  lr: 3.0e-4
+  epochs: 60
+  patience: 12
+
+eval:
+  hotspot_threshold: 0.05
+  positive_weight: 10.0
+
+output:
+  results_dir: results
+  tensorboard_dir: runs

@@ -25,6 +25,7 @@ cuda = [
 dev = [
     "pytest>=8",
     "ruff>=0.6",
+    "tensorboard>=2.21.0",
 ]
 
 [build-system]

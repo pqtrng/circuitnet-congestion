@@ -1,0 +1,33 @@
+# Variant A: plain masked squared error.
+#
+# Reference for the comparison in T7/T8. The expected failure mode is shrinkage
+# towards the conditional mean, not omission of rare high targets -- squaring
+# already amplifies those. Watch hotspot/prediction_max, not the loss curve.
+run_name: unet_a
+seed: 42
+
+data:
+  gold_dir: data/gold
+  batch_size: 32
+  num_workers: 4
+
+model:
+  in_channels: 3
+  base_channels: 32
+  depth: 4
+
+loss:
+  name: masked_mse
+
+optim:
+  lr: 3.0e-4
+  epochs: 60
+  patience: 12
+
+eval:
+  hotspot_threshold: 0.05
+  positive_weight: 10.0
+
+output:
+  results_dir: results
+  tensorboard_dir: runs

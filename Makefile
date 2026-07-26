@@ -1,4 +1,6 @@
-.PHONY: setup fmt lint test clean ci-status ci-watch acquire bronze silver gold report
+.PHONY: setup fmt lint test check clean ci-status ci-watch acquire bronze silver gold report train
+
+CONFIG ?= configs/unet_a.yaml
 
 setup:
 	@if command -v nvidia-smi >/dev/null 2>&1; then \
@@ -44,3 +46,6 @@ gold:
 
 report:
 	uv run python -m analysis.render_report
+
+train:
+	uv run python -m circuitnet_congestion.training.train --config $(CONFIG)

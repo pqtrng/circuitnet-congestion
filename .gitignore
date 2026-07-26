@@ -33,3 +33,10 @@ mlflow.db
 /data/gold/*
 !/data/gold/norm_stats.json
 !/data/gold/summary.json
+
+# TensorBoard event files: monitoring artefacts, not results.
+# Reported numbers live in results/ as JSON, which stays in the repository.
+runs/
+
+# Smoke runs from --limit: throwaway, never reported.
+results/smoke_*/
