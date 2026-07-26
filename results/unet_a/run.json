@@ -1,0 +1,65 @@
+{
+  "run_name": "unet_a",
+  "smoke": false,
+  "started_utc": "2026-07-26T15:17:57Z",
+  "git": {
+    "revision": "0d1c53e012a6b851ac3dbda7876593dd811aa7bf",
+    "dirty": false
+  },
+  "config": {
+    "run_name": "unet_a",
+    "seed": 42,
+    "data": {
+      "gold_dir": "data/gold",
+      "batch_size": 32,
+      "num_workers": 4
+    },
+    "model": {
+      "in_channels": 3,
+      "base_channels": 32,
+      "depth": 4
+    },
+    "loss": {
+      "name": "masked_mse",
+      "threshold": null,
+      "positive_weight": null
+    },
+    "optim": {
+      "lr": 0.0003,
+      "epochs": 60,
+      "patience": 0
+    },
+    "eval": {
+      "hotspot_threshold": 0.05,
+      "positive_weight": 10.0
+    },
+    "output": {
+      "results_dir": "results",
+      "tensorboard_dir": "runs",
+      "checkpoint_every": 5
+    }
+  },
+  "environment": {
+    "python": "3.12.13",
+    "torch": "2.13.0+cu126",
+    "device_type": "cuda",
+    "accelerator_memory_gib": 5.99969482421875
+  },
+  "model": {
+    "parameters": 7849601
+  },
+  "data": {
+    "train_patches": 37704,
+    "val_patches": 6641
+  },
+  "baseline": {
+    "val_zero_predictor_mse": 1.29870199355839e-05
+  },
+  "notes": {
+    "epoch_budget": "The epoch count is a time budget that fits two runs in one session, not a convergence criterion.",
+    "learning_rate": "Fixed. Chosen from the scale of the targets and never tuned against this dataset, so it is not claimed to be optimal.",
+    "reproducibility": "Seeded, but autotuned convolution selection means results are reproducible in distribution rather than bitwise. A single seed was run, so no claim is made about variance across seeds.",
+    "checkpoints": "Weights are excluded from the repository; the digests below are the link between these numbers and the weights that produced them.",
+    "selection": "Three selection rules are recorded because they disagree. Reporting one of them would report a choice rather than a result."
+  }
+}

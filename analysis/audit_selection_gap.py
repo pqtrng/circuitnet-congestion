@@ -73,8 +73,7 @@ def _format_run(name: str, run: dict[str, Any]) -> list[str]:
 
     if gap["f1_choice_error_over_baseline"] and gap["f1_choice_error_over_baseline"] > 1.0:
         lines.append(
-            "  -> that choice is rated worse than predicting zero everywhere "
-            "by the pixel metric"
+            "  -> that choice is rated worse than predicting zero everywhere by the pixel metric"
         )
 
     return lines
@@ -92,7 +91,7 @@ def run() -> str:
         r["gap_between_error_and_f1"]["f1_ratio"]
         for r in runs.values()
         if r["gap_between_error_and_f1"]["f1_ratio"] is not None
-           and r["epochs_recorded"] >= MINIMUM_EPOCHS_FOR_RATIO
+        and r["epochs_recorded"] >= MINIMUM_EPOCHS_FOR_RATIO
     ]
     zeroed = sum(1 for r in runs.values() if r["gap_between_error_and_f1"]["f1_ratio"] is None)
 

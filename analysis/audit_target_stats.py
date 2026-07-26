@@ -87,7 +87,7 @@ def _threshold(splits: dict[str, dict[str, Any]]) -> list[str]:
     index = next(
         i for i, level in enumerate(near) if abs(level["value"] - HOTSPOT_THRESHOLD) < 1e-6
     )
-    for level in near[max(0, index - 2): index + 3]:
+    for level in near[max(0, index - 2) : index + 3]:
         marker = "  <-- threshold" if abs(level["value"] - HOTSPOT_THRESHOLD) < 1e-6 else ""
         lines.append(
             f"  {level['value']:.6f}  {level['fraction']:>7}  {level['count']:>10,}{marker}"
@@ -138,7 +138,7 @@ def _error_concentration(splits: dict[str, dict[str, Any]]) -> list[str]:
         "target would compound an existing bias rather than correct one. The weighted",
         "loss uses a binary class weight for that reason.",
         "",
-        f"That concentration is a property of the training split, not of the task. On",
+        "That concentration is a property of the training split, not of the task. On",
         f"the test split the same tail carries only "
         f"{test_tail['squared_error_share'] * 100:.1f}% -- its error sits in the",
         "moderate hotspot band instead, which is the band that matters in practice.",
@@ -150,8 +150,7 @@ def _shift(splits: dict[str, dict[str, Any]]) -> list[str]:
     sparsest = min(splits, key=lambda n: splits[n]["nonzero_fraction_of_valid"])
     densest = max(splits, key=lambda n: splits[n]["nonzero_fraction_of_valid"])
     ratio = (
-            splits[densest]["nonzero_fraction_of_valid"]
-            / splits[sparsest]["nonzero_fraction_of_valid"]
+        splits[densest]["nonzero_fraction_of_valid"] / splits[sparsest]["nonzero_fraction_of_valid"]
     )
 
     lines = [
