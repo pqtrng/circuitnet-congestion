@@ -47,7 +47,7 @@ BASELINE = Path(__file__).with_name("prose_claims_baseline.txt")
 SELF = Path(__file__).resolve().relative_to(ROOT).as_posix()
 
 PY_ROOTS = ("src", "analysis", "tests")
-TEXT_GLOBS = ("configs/*.yaml", "configs/*.yml", "docs/*.tmpl", "README.md")
+TEXT_GLOBS = ("configs/*.yaml", "configs/*.yml", "docs/*.tmpl", "README.md.tmpl")
 
 INVARIANT_HEADER = "# INVARIANT"
 PENDING_HEADER = "# PENDING"

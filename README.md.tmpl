@@ -16,12 +16,7 @@ documents. Every model-derived number below is from validation. Test evaluation 
 
 On this target, the metric used to select a checkpoint changes the resulting model more than the loss function does.
 
-| run | selected by | epoch | val error / zero-predictor | hotspot F1 |
-|---------------------|--------------|-------|----------------------------|------------|
-| plain squared error | lowest error | 5 | 0.949 | 0.0022 |
-| plain squared error | highest F1 | 41 | **1.001** | **0.0356** |
-| weighted | lowest error | 9 | 1.187 | 0.0503 |
-| weighted | highest F1 | 7 | 1.296 | **0.0740** |
+<!--TABLE:headline-->
 
 The two rules never pick the same epoch, in any run recorded. In the plain run they land tens of epochs apart and
 differ by an order of magnitude in hotspot F1. The model that detects hotspots best is one that squared error rates as *worse than
@@ -42,13 +37,7 @@ and a per-design, per-layer denominator — not a continuous field but a grid of
 
 Validation rests on a single design (Vortex-large) and test on another (openc910-1); training holds the rest.
 
-| split | patches | non-zero pixels | zero-predictor error |
-|-------|---------|-----------------|----------------------|
-| train | 37,704 | 1.601% | 3.07e-05 |
-| val | 6,641 | 0.955% | 1.30e-05 |
-| test | 3,657 | 5.575% | 1.36e-04 |
-
-The zero-predictor error spans a factor of 10.5 across splits, so **absolute error is not comparable between them**.
+<!--TABLE:target_summary-->
 Every figure in this repository is reported as a ratio against the baseline of its own split.
 
 Full measurement: [`docs/data_decisions.md`](docs/data_decisions.md) and

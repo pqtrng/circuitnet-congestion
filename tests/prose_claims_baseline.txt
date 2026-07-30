@@ -3,10 +3,10 @@
 # source line no longer carries a quantity.
 
 # INVARIANT -- cannot drift: architecture, format, standards, fixtures.
-README.md::**Model.** U-Net, depth 4, 7.8M parameters, bilinear upsampling, linear output head. Trained in single precision for 60
-README.md::**Patches** are 128×128 crops at native resolution, never resized: congestion is a density on a physical routing grid,
-README.md::- A 128×128 patch gives a local receptive field. Congestion driven by global layout structure beyond one patch is
-README.md::Model weights are excluded from the repository. Every run record stores a SHA-256 per checkpoint alongside the git
+README.md.tmpl::**Model.** U-Net, depth 4, 7.8M parameters, bilinear upsampling, linear output head. Trained in single precision for 60
+README.md.tmpl::**Patches** are 128×128 crops at native resolution, never resized: congestion is a density on a physical routing grid,
+README.md.tmpl::- A 128×128 patch gives a local receptive field. Congestion driven by global layout structure beyond one patch is
+README.md.tmpl::Model weights are excluded from the repository. Every run record stores a SHA-256 per checkpoint alongside the git
 analysis/probe_throughput.py::# A per-image time this many times the flat-region median is treated as spill
 docs/data_decisions.md.tmpl::resolution. Patch size 128 was chosen over 256 because it requires no padding for
 docs/data_decisions.md.tmpl::samples -- the exact shares are rendered below -- and 128 yields a substantially
@@ -30,17 +30,6 @@ tests/test_silver.py::# gt = max(0, 0.3) = 0.3, no crash from int dtype
 tests/test_silver.py::# max(0.5, 0.3)
 
 # PENDING -- measurements to relocate. Must reach zero.
-README.md::The zero-predictor error spans a factor of 10.5 across splits, so **absolute error is not comparable between them**.
-README.md::This is not a subtle effect. It follows directly from the target: 98.5% of valid pixels are zero, so a predictor that
-README.md::with Pandera schema validation and SHA-1 fingerprinting. Deduplication reduced 10,606 nominal samples to 4,216 unique
-README.md::| `tests/` | 115 tests, CPU-only, synthetic fixtures |
-README.md::| plain squared error | highest F1 | 41 | **1.001** | **0.0356** |
-README.md::| plain squared error | lowest error | 5 | 0.949 | 0.0022 |
-README.md::| test | openc910-1 | 3,657 | 5.575% | 1.36e-04 |
-README.md::| train | 4 designs | 37,704 | 1.601% | 3.07e-05 |
-README.md::| val | Vortex-large | 6,641 | 0.955% | 1.30e-05 |
-README.md::| weighted | highest F1 | 7 | 1.296 | **0.0740** |
-README.md::| weighted | lowest error | 9 | 1.187 | 0.0503 |
 tests/test_losses.py::a meaningful gap. The level 1/20 is exactly five percent and the strict
 tests/test_losses.py::percent. Levels around 0.05 are dense -- between three hundred and six
 tests/test_losses.py::without it, given that ~98.5% of valid target pixels are zero.

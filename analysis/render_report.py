@@ -21,7 +21,9 @@ from datetime import date
 from pathlib import Path
 
 DOCS = Path("docs")
+README = Path("README.md.tmpl")
 MARKER = re.compile(r"<!--AUDIT:(\w+)-->")
+TABLE = re.compile(r"<!--TABLE:(\w+)-->")
 
 
 def render(template_path: Path) -> str:
@@ -31,18 +33,27 @@ def render(template_path: Path) -> str:
         module = importlib.import_module(f"analysis.audit_{name}")
         text = text.replace(f"<!--AUDIT:{name}-->", f"```\n{module.run()}\n```")
 
+    # TABLE markers insert audit output raw, for markdown tables that must
+    # render as tables rather than as fenced text.
+    for name in TABLE.findall(text):
+        module = importlib.import_module(f"analysis.audit_{name}")
+        text = text.replace(f"<!--TABLE:{name}-->", module.run())
+
     return text.replace("<!--DATE-->", date.today().isoformat())
 
 
 def main() -> None:
     templates = sorted(DOCS.glob("*.md.tmpl"))
+    if README.is_file():
+        templates.append(README)
     if not templates:
         raise SystemExit(f"no templates found under {DOCS}")
 
     for template_path in templates:
         output_path = template_path.with_suffix("")
         output_path.write_text(render(template_path))
-        sections = len(MARKER.findall(template_path.read_text()))
+        source = template_path.read_text()
+        sections = len(MARKER.findall(source)) + len(TABLE.findall(source))
         print(f"wrote {output_path}  ({sections} audit sections)")
 
 
