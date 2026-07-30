@@ -15,9 +15,11 @@ loop can consume.
 
 Single precision, chosen on throughput rather than on stability. Under
 analysis.probe_precision half precision runs at 4.7 times the single-precision
-step time and uses 1.4 times the memory on this accelerator, which has no
-dedicated matrix units and gains nothing from the narrower format while
-autocast holds both copies of the weights. Earlier notes here claimed half
+step time on this accelerator, and bfloat16 at 4.8, two formats of different
+mantissa width agreeing because the hardware has no dedicated matrix units and
+gains nothing from a narrower one. Peak allocation under the reduced formats is
+not usable evidence either way: autotuning scratch space varies with dtype
+enough to swamp the difference. Earlier notes here claimed half
 precision produced non-finite values and that squared errors fell below its
 exponent floor. Neither reproduces: the largest activation the network produces
 is 5.3 against a ceiling of 65504, and no squared error over seven million

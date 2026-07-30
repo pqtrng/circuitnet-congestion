@@ -25,9 +25,9 @@ Convolutions preceding a normalisation layer carry no bias term -- the batch-nor
 shift parameter already provides it.
 
 Training runs in single precision. Half precision was measured at 4.7 times the
-single-precision step time and 1.4 times the peak allocation on this class of
-accelerator, which has no dedicated matrix units and gains nothing from the
-narrower format while autocast holds both copies of the weights. Numerical
+single-precision step time on this class of accelerator, and bfloat16 at 4.8:
+the hardware has no dedicated matrix units, so a narrower format buys no
+arithmetic throughput and the cost is pure casting overhead. Numerical
 range is not the reason: the largest activation this network produces is 5.3
 against a half-precision ceiling of 65504.
 """
