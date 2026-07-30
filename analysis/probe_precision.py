@@ -232,7 +232,7 @@ def train_steps(mode: str, dtype: torch.dtype | None, device: torch.device) -> d
     started = time.perf_counter()
     for index in range(MEASURED_STEPS):
         loss = _amp_step(model, optimizer, loss_fn, scaler, features, target, mask, dtype)
-        losses.append(float(loss))
+        losses.append(float(loss.detach()))
         if first_non_finite is None and not torch.isfinite(loss):
             first_non_finite = index
     torch.cuda.synchronize()

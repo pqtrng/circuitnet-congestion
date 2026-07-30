@@ -1,0 +1,77 @@
+{
+  "device": {
+    "free_gib": 5.01171875,
+    "total_gib": 5.99969482421875,
+    "free_fraction": 0.8353289453605836
+  },
+  "stability": {
+    "first_ms_per_image": 4.953560757815012,
+    "second_ms_per_image": 4.940162818752469,
+    "relative_drift": 0.002712044026501555,
+    "tolerance": 0.05,
+    "contended": false
+  },
+  "format_limits": {
+    "float32": {
+      "max": 3.4028234663852886e+38,
+      "smallest_normal": 1.1754943508222875e-38,
+      "smallest_subnormal": 1.401298464324817e-45,
+      "mantissa_bits": 23
+    },
+    "float16": {
+      "max": 65504.0,
+      "smallest_normal": 6.103515625e-05,
+      "smallest_subnormal": 5.960464477539063e-08,
+      "mantissa_bits": 10
+    },
+    "bfloat16": {
+      "max": 3.3895313892515355e+38,
+      "smallest_normal": 1.1754943508222875e-38,
+      "smallest_subnormal": 9.183549615799121e-41,
+      "mantissa_bits": 7
+    }
+  },
+  "modes": [
+    {
+      "mode": "float32",
+      "ms_per_image": 5.153281217189942,
+      "peak_allocated_gib": 2.0594263076782227,
+      "all_losses_finite": true,
+      "first_non_finite_step": null,
+      "first_loss": 5.602418241323903e-05,
+      "last_loss": 5.2181898354319856e-05
+    },
+    {
+      "mode": "float16",
+      "ms_per_image": 24.373574478124738,
+      "peak_allocated_gib": 2.864304542541504,
+      "all_losses_finite": true,
+      "first_non_finite_step": null,
+      "first_loss": 5.602819146588445e-05,
+      "last_loss": 5.221735773375258e-05
+    },
+    {
+      "mode": "bfloat16",
+      "ms_per_image": 24.878123220310044,
+      "peak_allocated_gib": 1.0510244369506836,
+      "all_losses_finite": true,
+      "first_non_finite_step": null,
+      "first_loss": 5.60336047783494e-05,
+      "last_loss": 5.2215149480616674e-05
+    }
+  ],
+  "activation_range": {
+    "largest_activation": 5.316390514373779,
+    "produced_by": "decoders.3.block.0",
+    "float16_ceiling": 65504.0,
+    "headroom_factor": 12321.141538210677,
+    "exceeds_float16": false
+  },
+  "error_magnitudes": {
+    "squared_errors_examined": 7116839,
+    "float16_smallest_normal": 6.103515625e-05,
+    "fraction_below_float16_normal": 0.0,
+    "smallest_non_zero_squared_error": 0.0001876524620456621,
+    "non_zero_targets_seen": 91453
+  }
+}
