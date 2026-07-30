@@ -12,17 +12,18 @@ run.
 
 How wide is the usable band? Rates an order of magnitude apart can either
 converge to the same place or collapse into the zero-predictor solution, which
-is what a target with 98.5% zeros does to optimisation: the trivial solution is
-a strong attractor. A collapsed run and a merely slow one have similar final
+is what an overwhelmingly zero target does to optimisation (the train-split
+fraction is under ``splits.train.nonzero_fraction_of_valid`` in
+``results/probes/target_stats.json``): the trivial solution is a strong
+attractor. A collapsed run and a merely slow one have similar final
 losses, so they are separated by whether any prediction has left the floor.
 
 This probe runs deterministically, and that requirement was earned rather than
 assumed. Three earlier invocations of the same sweep disagreed with each other
-by more than the rates disagreed among themselves: one configuration landed at
-0.03, 0.34 and 0.79 of the baseline on separate runs at an identical seed, a
-factor of thirty-two, while the gap between neighbouring rates was closer to
-two. Under autotuned kernel selection the instrument was measuring its own
-noise, and every conclusion drawn from it about which rates were usable was
+at an identical seed by more than the rates disagreed among themselves. Their
+records were not retained -- the figures would be quotable otherwise -- and
+under autotuned kernel selection the instrument was measuring its own noise,
+so every conclusion drawn from it about which rates were usable was
 worthless.
 
 Determinism is therefore verified before the sweep runs, by repeating one

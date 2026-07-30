@@ -297,8 +297,9 @@ Determinism, verified before sweeping:
   autotuning off, deterministic kernels enforced
 
 Without this the sweep below would be unreadable. Earlier invocations under
-autotuning disagreed with themselves by a factor of thirty-two at a fixed seed,
-which is larger than the difference between the rates being compared.
+autotuning disagreed with themselves at a fixed seed by more than the rates
+being compared disagreed with each other; their records were not retained, so
+that disagreement survives as testimony, not as a figure to quote.
 
 Fitting 32 patches, 800 steps, 3 seeds per rate. Loss is reported against the
 zero-predictor baseline of 1.5062e-05 on this subset, which contains 82 hotspot pixels:
@@ -316,9 +317,10 @@ generalisation or of the stopping rule, not of the optimiser. This is the
 cheapest diagnostic in the toolbox and it is almost never run.
 
 At 3e-03 every seed collapsed into the zero-predictor solution and stayed
-there, with no prediction anywhere above the hotspot threshold. This is what a
-target that is 98.5% zeros does to optimisation: the trivial solution is a
-strong attractor, and a step large enough to land in it does not leave.
+there, with no prediction anywhere above the hotspot threshold. This is what
+a target whose valid train pixels are 98.4% zeros does to
+optimisation: the trivial solution is a strong attractor, and a step large
+enough to land in it does not leave.
 
 At 1e-04 nothing collapsed outright, but the seeds span 40x -- from 0.0230 to 0.9298 of the baseline.
 Under determinism that spread is sensitivity to initialisation, not noise.
@@ -328,15 +330,15 @@ build on, however good its median looks.
 That leaves 3e-04: no collapse, and repetitions within a small factor.
 The configured rate of 3e-04 is among them, holding within 1.7x across seeds with a median recall of 1.000 on the subset.
 
-This is not the result the earlier, non-deterministic sweeps reported. They
-made 1e-4 look like the stable choice and this one look marginal. The
-ordering reversed once the instrument stopped contributing its own variance,
-which is the entire argument for spending the extra runtime.
+The earlier, non-deterministic sweeps ranked these rates the other way
+around -- 1e-4 stable, this one marginal. Their records were not retained,
+so that reversal is testimony rather than evidence; what stands on its own
+is that an instrument disagreeing with itself by more than the effect size
+cannot rank rates, and this one no longer does.
 
 Three seeds bound sensitivity to initialisation loosely and no more. A rate that
 passes here can still fail on a fourth seed, and nothing in this table says
-otherwise. Neither does fitting thirty-two patches predict the full split: mini-
-batch noise over 37,704 patches is a different optimisation problem, and the two
+otherwise. Neither does fitting 32 patches predict the full split: mini-batch noise over 37,704 patches is a different optimisation problem, and the two
 completed runs at the configured rate did not collapse.
 ```
 

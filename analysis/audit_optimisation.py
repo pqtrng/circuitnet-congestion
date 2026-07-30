@@ -1,25 +1,29 @@
 """Audit: optimisation health and the usable learning rate band.
 
-Renders the measurement written by analysis.probe_optimisation.
+Renders the measurement written by analysis.probe_optimisation, plus the
+train-split target statistics the collapse mechanism leans on.
 
 Two questions, and the second one only became answerable after the instrument
-was fixed. Three earlier invocations of the same sweep disagreed with each other
-by more than the learning rates disagreed among themselves: one configuration
-landed at 0.03, 0.34 and 0.79 of the baseline on separate runs at an identical
-seed, a factor of thirty-two, while neighbouring rates differed by about two.
-Under autotuned kernel selection the probe was measuring its own noise. Every
-verdict it produced about which rates were usable was worthless, including one
-that had already been written into a commit message.
+was fixed. Earlier invocations of the same sweep, run before the probe
+enforced determinism, disagreed with each other at a fixed seed by more than
+the learning rates disagreed among themselves. Their records were not
+retained, so the disagreement survives as testimony rather than as figures to
+quote -- one verdict drawn from those sweeps had already been written into a
+commit message. What stands without the records is the design consequence: an
+instrument that disagrees with itself by more than the effect it measures
+cannot rank anything.
 
 The probe now disables autotuning and verifies the choice by repeating a
-configuration and comparing losses bit for bit before it sweeps. That costs
-roughly three and a half times the runtime and is the right trade for something
-whose only job is to measure. The training entry point does the opposite,
-keeping autotuning for the throughput and recording in each run that its results
-are reproducible in distribution rather than bitwise.
+configuration and comparing losses bit for bit before it sweeps; the check
+and its outcome are recorded under ``determinism`` in
+``results/probes/optimisation.json``. That costs a multiple of the runtime
+and is the right trade for something whose only job is to measure. The
+training entry point does the opposite, keeping autotuning for the throughput
+and recording in each run that its results are reproducible in distribution
+rather than bitwise.
 
 With determinism in place, spread across seeds means sensitivity to
-initialisation rather than platform noise -- and the ranking changes.
+initialisation rather than platform noise.
 """
 
 from __future__ import annotations
@@ -29,6 +33,7 @@ from pathlib import Path
 from typing import Any
 
 PROBE = Path("results/probes/optimisation.json")
+TARGET_STATS = Path("results/probes/target_stats.json")
 CONFIGURED_LEARNING_RATE = 3e-4
 
 
@@ -57,8 +62,9 @@ def _determinism(record: dict[str, Any]) -> list[str]:
         f"{'enforced' if settings['deterministic_algorithms'] else 'not enforced'}",
         "",
         "Without this the sweep below would be unreadable. Earlier invocations under",
-        "autotuning disagreed with themselves by a factor of thirty-two at a fixed seed,",
-        "which is larger than the difference between the rates being compared.",
+        "autotuning disagreed with themselves at a fixed seed by more than the rates",
+        "being compared disagreed with each other; their records were not retained, so",
+        "that disagreement survives as testimony, not as a figure to quote.",
     ]
 
 
@@ -96,8 +102,10 @@ def _sweep(record: dict[str, Any]) -> list[str]:
     return lines
 
 
-def _verdict(record: dict[str, Any]) -> list[str]:
+def _verdict(record: dict[str, Any], stats: dict[str, Any]) -> list[str]:
     summary = record["summary"]
+    train = stats["splits"]["train"]
+    zero_fraction = 1.0 - train["nonzero_fraction_of_valid"]
     usable = summary["usable_learning_rates"]
     sensitive = summary["initialisation_sensitive_rates"]
     collapsing = summary["always_collapsing_rates"]
@@ -108,9 +116,10 @@ def _verdict(record: dict[str, Any]) -> list[str]:
         rates = ", ".join(f"{r:.0e}" for r in collapsing)
         lines += [
             f"At {rates} every seed collapsed into the zero-predictor solution and stayed",
-            "there, with no prediction anywhere above the hotspot threshold. This is what a",
-            "target that is 98.5% zeros does to optimisation: the trivial solution is a",
-            "strong attractor, and a step large enough to land in it does not leave.",
+            "there, with no prediction anywhere above the hotspot threshold. This is what",
+            f"a target whose valid train pixels are {zero_fraction:.1%} zeros does to",
+            "optimisation: the trivial solution is a strong attractor, and a step large",
+            "enough to land in it does not leave.",
             "",
         ]
 
@@ -141,10 +150,11 @@ def _verdict(record: dict[str, Any]) -> list[str]:
                 f"within {chosen['relative_spread']:.1f}x across seeds with a median recall of "
                 f"{chosen['median_recall']:.3f} on the subset.",
                 "",
-                "This is not the result the earlier, non-deterministic sweeps reported. They",
-                "made 1e-4 look like the stable choice and this one look marginal. The",
-                "ordering reversed once the instrument stopped contributing its own variance,",
-                "which is the entire argument for spending the extra runtime.",
+                "The earlier, non-deterministic sweeps ranked these rates the other way",
+                "around -- 1e-4 stable, this one marginal. Their records were not retained,",
+                "so that reversal is testimony rather than evidence; what stands on its own",
+                "is that an instrument disagreeing with itself by more than the effect size",
+                "cannot rank rates, and this one no longer does.",
             ]
     else:
         lines.append(
@@ -156,8 +166,9 @@ def _verdict(record: dict[str, Any]) -> list[str]:
         "",
         "Three seeds bound sensitivity to initialisation loosely and no more. A rate that",
         "passes here can still fail on a fourth seed, and nothing in this table says",
-        "otherwise. Neither does fitting thirty-two patches predict the full split: mini-",
-        "batch noise over 37,704 patches is a different optimisation problem, and the two",
+        f"otherwise. Neither does fitting {record['subset']['patches']} patches predict "
+        f"the full split: mini-batch noise over {train['patches']:,} patches is a "
+        "different optimisation problem, and the two",
         "completed runs at the configured rate did not collapse.",
     ]
     return lines
@@ -168,7 +179,8 @@ def run() -> str:
 
     sections = [_determinism(record)]
     if record["summary"].get("answered"):
-        sections += [_sweep(record), _verdict(record)]
+        stats = json.loads(TARGET_STATS.read_text())
+        sections += [_sweep(record), _verdict(record, stats)]
     return "\n\n".join("\n".join(section) for section in sections)
 
 
