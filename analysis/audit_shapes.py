@@ -1,4 +1,4 @@
-"""T5 audit: raw shapes cluster by chip, so resizing would confound domain shift."""
+"""Task 5 audit: raw shapes cluster by chip, so resizing would confound domain shift."""
 
 from __future__ import annotations
 
@@ -28,6 +28,8 @@ def run() -> str:
         f"H range: {h.min()}-{h.max()} (median {int(np.median(h))})",
         f"W range: {w.min()}-{w.max()} (median {int(np.median(w))})",
         f"aspect W/H median: {np.median(ar):.2f}  (near-square: {near_square:.0f}%)",
+        f"smaller dimension under 128: {(np.minimum(h, w) < 128).mean():.0%}"
+        f"   under 256: {(np.minimum(h, w) < 256).mean():.0%}",
         "",
         "per-design median shape (size clusters tightly by chip):",
     ]

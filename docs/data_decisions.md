@@ -92,8 +92,9 @@ zero hotspots — the only thing that matters for routability.
 ## 4. Shape handling — crop, do not resize
 
 Raw feature maps have variable shape, and the shape clusters tightly by chip:
-small CPU designs are roughly 250 px across while the largest design approaches
-1640 px. Resizing everything to a fixed square would cause two problems. First,
+the small CPU designs are dwarfed by the largest -- the ranges and per-design
+medians are rendered below. Resizing everything to a fixed square would cause
+two problems. First,
 congestion is a density defined on a physical routing grid, so rescaling distorts
 the quantity being predicted. Second, and more seriously, it would confound the
 design-wise domain shift with a resize-induced loss of detail: training chips
@@ -102,8 +103,9 @@ several-fold, making a poor test score impossible to attribute.
 
 Chips are therefore cropped into non-overlapping 128x128 patches at native
 resolution. Patch size 128 was chosen over 256 because it requires no padding for
-the smallest chips (256 would pad roughly three quarters of them) and yields a
-substantially larger training set. Edge patches are zero-padded to a full 128x128
+the smallest chips, while a 256 window exceeds the smaller dimension of most
+samples -- the exact shares are rendered below -- and 128 yields a substantially
+larger training set. Edge patches are zero-padded to a full 128x128
 and accompanied by a valid mask, so padded pixels can be excluded from both the
 loss and the evaluation metrics.
 
@@ -112,6 +114,7 @@ unique samples: 4216
 H range: 167-1731 (median 225)
 W range: 228-1729 (median 320)
 aspect W/H median: 1.45  (near-square: 37%)
+smaller dimension under 128: 0%   under 256: 73%
 
 per-design median shape (size clusters tightly by chip):
   RISCY          n= 1318  215x312

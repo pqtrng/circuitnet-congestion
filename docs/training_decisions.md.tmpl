@@ -40,10 +40,10 @@ later.
 
 ## 2. Loss — masked reduction and a binary class weight
 
-Patch coverage ranges from under two percent to a full window, because edge
+Patch coverage ranges from a sliver of a window to all of it, because edge
 patches are zero-padded to a fixed size. Reducing the loss as a mean of per-patch
-means would let a pixel in a small edge fragment count up to sixty-four times a
-pixel in a full patch. The reduction is therefore a single global masked mean
+means would weight a pixel by the inverse of its patch's coverage, letting the
+smallest edge fragments dominate. The reduction is therefore a single global masked mean
 over every valid pixel in the batch. Edge fragments are kept rather than
 filtered: the die boundary is where macros and IO sit, so discarding it would
 discard the hard cases.
@@ -52,8 +52,9 @@ Two objectives are trained and compared. The failure mode of plain squared error
 on this target is not that it ignores rare high values — the measurement in
 section 1 shows squaring already amplifies them heavily. The failure is
 shrinkage: where the model cannot distinguish pixels, the minimiser is the
-conditional mean, which for a pixel that is a hotspot with probability 0.3 and
-value 0.07 sits below any usable threshold. The model then predicts a smooth
+conditional mean, which for an illustrative pixel -- hotspot with probability
+0.3 and value 0.07, values chosen for the arithmetic rather than measured --
+sits below any usable threshold. The model then predicts a smooth
 low-amplitude field that scores well per pixel while crossing no threshold
 anywhere.
 
@@ -64,17 +65,18 @@ against the optimiser in `tests/test_losses.py` rather than asserted here.
 
 ## 3. Batch size and loader workers
 
-Per-image time is flat across the entire batch range this accelerator can hold,
-so no batch size in that range is faster than another. The choice is made on
-memory headroom instead, and for a specific reason: on this platform, exceeding
-device memory does not raise. The driver falls back to host memory and the run
-becomes several times slower with nothing in the logs to say so.
+Per-image time varies little across the batch range this accelerator can hold --
+the sweep and its spread are rendered below -- and the configured size sits
+within measurement drift of the fastest. The choice is made on memory headroom
+instead, and for a specific reason: on this platform, exceeding device memory is
+not expected to raise. The driver can fall back to host memory and the run slows
+drastically with nothing in the logs to say so.
 
-That failure was observed directly before autotuning was enabled, and it does not
-reproduce with autotuning on, which selects a more frugal convolution algorithm
-under pressure. Both measurements describe their own configuration correctly. The
-conservative batch size is kept because the failure it avoids is silent, not
-because the faster option is slower.
+That failure was observed once, before autotuning was enabled. The records of
+that episode were not retained, so it stands as testimony, and the present sweep
+does not reproduce it -- autotuning selects a more frugal convolution algorithm
+under pressure. The conservative batch size is kept because the failure mode it
+points at is silent, not because the faster option is slower.
 
 Loading is not the constraint and never was. An early estimate treated this task
 as input-bound because compute and loading were timed together; separating them
@@ -85,46 +87,54 @@ shows loading running an order of magnitude faster than the loop can consume.
 ## 4. Numerical precision
 
 Training runs in single precision, and the reason recorded here is not the reason
-originally given.
+originally given -- nor the first replacement for it, which was withdrawn in
+turn.
 
 Two earlier claims — that half precision produced non-finite values on the first
 forward pass, and that squared errors reached the bottom of its dynamic range —
-do not reproduce. Both were true when they were made: the output head was not yet
-zero-initialised, predictions ran two orders of magnitude above any target, and
-the resulting errors genuinely did overflow. Fixing the initialisation removed
-the numerical problem and left the conclusion without a justification.
+were withdrawn. The records behind them were not retained, so whether the
+observation was real cannot be established; the mechanism it described is
+arithmetically plausible for the head initialisation the model had at the time,
+but plausibility is not a measurement. The replacement claim, an activation
+ceiling with ample headroom, came from a probe that measures the model at
+initialisation, where a zero-initialised head makes every examined error a
+squared target; it was withdrawn for that reason, and the range question stays
+open until re-measured from a trained checkpoint.
 
-The justification that survives is throughput. This accelerator has no dedicated
-matrix units, so a narrower format buys no arithmetic and the cast is pure
-overhead. Bfloat16 is measured alongside as a control rather than a candidate: it
-carries single precision's exponent range with fewer mantissa bits, so a failure
-of range would separate the two formats. It does not.
+The justification that survives is throughput: both half-width formats run the
+same training step materially slower than single precision on this machine, and
+the timings — which depend on shapes, dtypes and kernel selection rather than on
+weights, and therefore transfer to training — are rendered below. Bfloat16 is
+measured alongside as a control rather than a candidate; on a zero-output model
+finiteness discriminates nothing, so the control becomes informative only once
+the measurements come from a trained checkpoint.
 
 <!--AUDIT:precision-->
 
 ## 5. Learning rate, and fixing the instrument first
 
-This section exists in its current form because the probe behind it was wrong
-three times.
+This section exists in its current form because the probe behind it kept being
+wrong.
 
 Three invocations of the same learning-rate sweep disagreed with each other by
 more than the learning rates disagreed among themselves. Under autotuned kernel
 selection, a fixed seed does not produce a fixed result, and the variation was
 large enough to flip a verdict between "fitted" and "collapsed" rather than to
 move the last digits. Every conclusion drawn from those runs was noise, including
-one already written into a commit message.
+one already written into a commit message; the records of those invocations were
+not retained.
 
 The probe now disables autotuning, enforces deterministic kernels, and verifies
 that choice by repeating a configuration and comparing losses bit for bit before
-it sweeps. That costs roughly three and a half times the runtime, which is the
+it sweeps. That costs a multiple of the runtime, which is the
 right trade for something whose only job is to measure. The training entry point
 deliberately does the opposite: it keeps autotuning for the throughput and
 records in every run that its results are reproducible in distribution rather
 than bitwise.
 
 With the instrument fixed, spread across seeds means sensitivity to
-initialisation rather than platform noise — and the ranking of the candidate
-rates reverses.
+initialisation rather than platform noise; what the earlier sweeps reported, and
+that their records were not retained, is stated in the rendered verdict below.
 
 <!--AUDIT:optimisation-->
 
@@ -166,8 +176,8 @@ a time constraint, not a convergence criterion, and each run record says so.
 
 ## Process
 
-The baseline was trained three times. Each retraining was caused by a measurement
-that contradicted a standing assumption: early stopping selecting on noise, then
+Every retraining of the baseline was caused by a measurement that contradicted a
+standing assumption: first early stopping selecting on noise, then
 a selection rule that only became interesting after the run had finished and for
 which no checkpoint existed. The runs that were replaced are kept under
 `results/superseded/` with their full trajectories, because the argument in

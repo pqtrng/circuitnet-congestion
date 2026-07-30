@@ -9,7 +9,12 @@ README.md::- A 128×128 patch gives a local receptive field. Congestion driven b
 README.md::Model weights are excluded from the repository. Every run record stores a SHA-256 per checkpoint alongside the git
 analysis/probe_throughput.py::# A per-image time this many times the flat-region median is treated as spill
 docs/data_decisions.md.tmpl::resolution. Patch size 128 was chosen over 256 because it requires no padding for
+docs/data_decisions.md.tmpl::samples -- the exact shares are rendered below -- and 128 yields a substantially
+docs/data_decisions.md.tmpl::the smallest chips, while a 256 window exceeds the smaller dimension of most
+docs/training_decisions.md.tmpl::0.3 and value 0.07, values chosen for the arithmetic rather than measured --
 docs/training_decisions.md.tmpl::a SHA-256 per checkpoint, the git revision, and whether the worktree was clean —
+docs/training_decisions.md.tmpl::demand exceeding capacity by more than five percent, and the level sitting
+docs/training_decisions.md.tmpl::exactly at five percent is excluded by a strict comparison. And the concentration
 src/circuitnet_congestion/data/provenance.py::# UTC ISO-8601
 src/circuitnet_congestion/data/silver.py::# (integer 0 -> float 0.0); this only normalizes the storage dtype.
 src/circuitnet_congestion/models/unet.py::128 -> 64 -> 32 -> 16 -> 8, so a bottleneck unit summarises a 16x16 input
@@ -36,19 +41,6 @@ README.md::| train | 4 designs | 37,704 | 1.601% | 3.07e-05 |
 README.md::| val | Vortex-large | 6,641 | 0.955% | 1.30e-05 |
 README.md::| weighted | highest F1 | 7 | 1.296 | **0.0740** |
 README.md::| weighted | lowest error | 9 | 1.187 | 0.0503 |
-docs/data_decisions.md.tmpl::1640 px. Resizing everything to a fixed square would cause two problems. First,
-docs/data_decisions.md.tmpl::small CPU designs are roughly 250 px across while the largest design approaches
-docs/data_decisions.md.tmpl::the smallest chips (256 would pad roughly three quarters of them) and yields a
-docs/training_decisions.md.tmpl::Patch coverage ranges from under two percent to a full window, because edge
-docs/training_decisions.md.tmpl::The baseline was trained three times. Each retraining was caused by a measurement
-docs/training_decisions.md.tmpl::becomes several times slower with nothing in the logs to say so.
-docs/training_decisions.md.tmpl::conditional mean, which for a pixel that is a hotspot with probability 0.3 and
-docs/training_decisions.md.tmpl::demand exceeding capacity by more than five percent, and the level sitting
-docs/training_decisions.md.tmpl::exactly at five percent is excluded by a strict comparison. And the concentration
-docs/training_decisions.md.tmpl::means would let a pixel in a small edge fragment count up to sixty-four times a
-docs/training_decisions.md.tmpl::three times.
-docs/training_decisions.md.tmpl::value 0.07 sits below any usable threshold. The model then predicts a smooth
-docs/training_decisions.md.tmpl::zero-initialised, predictions ran two orders of magnitude above any target, and
 src/circuitnet_congestion/training/dataset.py::they are merged, neither the loss nor the evaluation can tell them apart. 42% of
 tests/test_losses.py::a meaningful gap. The level 1/20 is exactly five percent and the strict
 tests/test_losses.py::percent. Levels around 0.05 are dense -- between three hundred and six
