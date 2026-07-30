@@ -5,10 +5,12 @@ Each `<!--AUDIT:name-->` marker is replaced by the fenced output of
 themselves rather than maintained separately, so adding a section to a template
 is enough.
 
-Numbers come from committed manifests and probe records and are never written by
-hand, so re-rendering always reflects the current evidence. Audits read only
-committed JSON, which means this runs on a fresh clone with no data layer and no
-accelerator.
+The figures substituted at markers come from committed manifests and probe
+records, so re-rendering reflects the current evidence. The sentences around
+those figures -- template prose and the audits' own strings -- are written by
+hand; tests/test_prose_claims.py gates the hand-written prose it can see, and
+its docstring records what it cannot. Audits read only committed JSON, which
+means this runs on a fresh clone with no data layer and no accelerator.
 """
 
 from __future__ import annotations

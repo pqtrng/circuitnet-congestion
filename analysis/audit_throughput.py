@@ -6,15 +6,16 @@ machine that has neither.
 
 Two things the numbers here do not say on their own, and which the text has to.
 
-The configured batch size is not the fastest one this probe found. Per-image
-time is flat across the whole range, so speed does not distinguish them, and 32
-is chosen for the memory it leaves free. That preference comes from an earlier
-measurement, taken before autotuning was enabled, in which batch 64 allocated
-more than the device physically has and ran seven times slower per image
-without raising. This probe does not reproduce that, because autotuning selects
-a more frugal convolution algorithm under pressure. Both observations are
-correct about their own configuration, and the conservative choice is kept
-because the failure mode it avoids is silent.
+The configured batch size is not chosen for speed. The per-image spread across
+the sweep is rendered from the record below rather than summarised here, and
+the configured size sits within measurement drift of the fastest; what decides
+is the memory it leaves free. That preference traces to an earlier
+measurement, taken before autotuning was enabled, in which the largest batch
+spilled past device memory and ran drastically slower without raising. The
+records of that episode were not retained, so it stands as testimony; what it
+motivates stands on its own, because the failure mode it points at is silent.
+The present sweep does not reproduce the spill, because autotuning selects a
+more frugal convolution algorithm under pressure.
 
 Peak allocation is not monotonic in batch size, which looks like a measurement
 error and is not. Autotuning allocates scratch space while trying algorithms,
@@ -99,7 +100,8 @@ def _loading_table(record: dict[str, Any], compute_ms: float) -> list[str]:
 def _decision(record: dict[str, Any]) -> list[str]:
     summary = record["summary"]
     spilled = summary["spilled_batch_sizes"]
-    flat = summary["flat_region_ms_per_image"]
+    per_image = [e["ms_per_image"] for e in record["compute"] if not e["out_of_memory"]]
+    fastest, slowest = min(per_image), max(per_image)
 
     configured = next(
         (e for e in record["compute"] if e["batch_size"] == CONFIGURED_BATCH_SIZE), None
@@ -110,15 +112,16 @@ def _decision(record: dict[str, Any]) -> list[str]:
     )
 
     lines = [
-        f"Per-image time holds near {flat:.2f} ms across the whole sweep, so no batch "
-        "size in this range is faster than another",
+        f"Per-image time spans {fastest:.2f} to {slowest:.2f} ms across the sweep, a "
+        f"spread of {slowest / fastest - 1.0:.0%} between the fastest and slowest "
+        "batch size measured,",
     ]
     if spilled:
-        lines.append(f"except {spilled}, which left the flat region or exceeded device memory.")
+        lines.append(f"and {spilled} left the flat region or exceeded device memory.")
     else:
         lines.append(
             "and none exceeded device memory. The spill observed earlier, without "
-            "autotuning, does not reproduce here."
+            "autotuning, does not reproduce here; its records were not retained."
         )
 
     if configured and largest and configured["batch_size"] != largest["batch_size"]:
@@ -131,10 +134,10 @@ def _decision(record: dict[str, Any]) -> list[str]:
             f"and leaves {configured['free_after_gib']:.2f} GiB free where "
             f"{largest['batch_size']} leaves {largest['free_after_gib']:.2f} GiB. Headroom "
             "is the whole reason: on this platform,",
-            "exceeding device memory does not raise. The driver falls back to host memory",
-            "and the run simply becomes several times slower, with nothing in the logs to",
-            "say so. A configuration that cannot fail that way is worth more than a",
-            "speed difference that does not exist.",
+            "exceeding device memory is not expected to raise. The driver can fall back",
+            "to host memory and the run slows drastically and silently, with nothing in",
+            "the logs to say so. A configuration that cannot fail that way is worth more",
+            "than a speed difference within measurement drift.",
         ]
 
     return lines
@@ -152,12 +155,13 @@ def _caveat(record: dict[str, Any]) -> list[str]:
         ]
     return [
         "The device was verified idle by repeating one batch size at the start and end "
-        "of the sweep: the two agreed within "
-        f"{check.get('relative_drift', 0):.1%}. That check exists because reading free "
-        "memory does not work here --",
-        "an earlier version of this probe saw 84% of a busy device as free, produced "
-        "timings two and a half times slower than the truth, and slowed the training run "
-        "it was competing with by 30%.",
+        "of the compute sweep: the two agreed within "
+        f"{check.get('relative_drift', 0):.1%}. The loading numbers are not bracketed "
+        "by this check, a known limitation of the instrument. The check exists because "
+        "reading free memory does not work here --",
+        "an earlier version of this probe saw most of a busy device as free, produced "
+        "timings far from the truth, and slowed the training run it was competing with. "
+        "The records of that episode were not retained.",
     ]
 
 

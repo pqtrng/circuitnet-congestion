@@ -36,11 +36,6 @@ README.md::| train | 4 designs | 37,704 | 1.601% | 3.07e-05 |
 README.md::| val | Vortex-large | 6,641 | 0.955% | 1.30e-05 |
 README.md::| weighted | highest F1 | 7 | 1.296 | **0.0740** |
 README.md::| weighted | lowest error | 9 | 1.187 | 0.0503 |
-analysis/audit_throughput.py::more than the device physically has and ran seven times slower per image
-analysis/probe_throughput.py::can therefore be several times slower than one chosen from a measurement, with
-analysis/probe_throughput.py::collapsing by several times. A configuration chosen from a memory figure alone
-analysis/probe_throughput.py::half times slower than the truth, and slowed that training run by 30% in the
-analysis/probe_throughput.py::held by another process: an earlier version of this probe read 84% of the
 docs/data_decisions.md.tmpl::1640 px. Resizing everything to a fixed square would cause two problems. First,
 docs/data_decisions.md.tmpl::small CPU designs are roughly 250 px across while the largest design approaches
 docs/data_decisions.md.tmpl::the smallest chips (256 would pad roughly three quarters of them) and yields a

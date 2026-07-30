@@ -2,9 +2,9 @@
 
 Exceeding accelerator memory does not raise on every platform. The driver may
 fall back to host memory and keep running, which shows up only as throughput
-collapsing by several times. A configuration chosen from a memory figure alone
-can therefore be several times slower than one chosen from a measurement, with
-nothing in the logs to say so. This probe measures both.
+collapsing, not as an error. A configuration chosen from a memory figure alone
+can therefore run much slower than one chosen from a measurement, with nothing
+in the logs to say so. This probe measures both.
 
 Two quantities are measured separately and from different sources. Compute is
 timed on synthetic tensors so that loading cannot contribute to it, and loading
@@ -14,18 +14,20 @@ by input rather than by compute.
 
 Detecting that the device is busy turned out to be the hard part. On a
 virtualised accelerator a fresh process does not necessarily observe memory
-held by another process: an earlier version of this probe read 84% of the
-device as free while a training run was using it, produced numbers two and a
-half times slower than the truth, and slowed that training run by 30% in the
-process. Sampling free memory repeatedly does not fix it either, because a
-caching allocator holds a steady reservation.
+held by another process: an earlier version of this probe read most of the
+device as free while a training run was using it, produced numbers far from
+the truth, and slowed that training run in the process. The records of that
+episode were not retained, so it stands as testimony; the design consequence
+stands on its own. Sampling free memory repeatedly does not fix the blindness
+either, because a caching allocator holds a steady reservation.
 
 The check that does work is repetition. One batch size is timed twice, at the
-start and at the end of the sweep. Contention slows everything consistently, so
-the two timings diverge; on an idle device they agree within a few percent. If
-they disagree the record is written with `contended` set and must not be
-reported, because every number in it was taken against an unknown competing
-load.
+start and at the end of the compute sweep. Contention slows everything
+consistently, so the two timings diverge; on an idle device they agree within
+a few percent. If they disagree the record is written with `contended` set and
+must not be reported. The check brackets the compute sweep only: the loading
+sweep runs after the second timing and is not covered by it, which is a known
+limitation of this instrument rather than a property of the numbers.
 """
 
 from __future__ import annotations

@@ -176,18 +176,18 @@ At 4 workers, loading is 28 times faster than the loop can consume. This task is
 the opposite of what was assumed before it was measured, when the two were
 timed together and loading was blamed for the step time.
 
-Per-image time holds near 4.97 ms across the whole sweep, so no batch size in this range is faster than another
-and none exceeded device memory. The spill observed earlier, without autotuning, does not reproduce here.
+Per-image time spans 4.81 to 5.71 ms across the sweep, a spread of 19% between the fastest and slowest batch size measured,
+and none exceeded device memory. The spill observed earlier, without autotuning, does not reproduce here; its records were not retained.
 
 The configured batch of 32 is therefore not chosen for speed. It runs at 4.85 ms per image against 4.93 at 64, a difference inside the noise of this measurement,
 and leaves 2.43 GiB free where 64 leaves 0.00 GiB. Headroom is the whole reason: on this platform,
-exceeding device memory does not raise. The driver falls back to host memory
-and the run simply becomes several times slower, with nothing in the logs to
-say so. A configuration that cannot fail that way is worth more than a
-speed difference that does not exist.
+exceeding device memory is not expected to raise. The driver can fall back
+to host memory and the run slows drastically and silently, with nothing in
+the logs to say so. A configuration that cannot fail that way is worth more
+than a speed difference within measurement drift.
 
-The device was verified idle by repeating one batch size at the start and end of the sweep: the two agreed within 3.6%. That check exists because reading free memory does not work here --
-an earlier version of this probe saw 84% of a busy device as free, produced timings two and a half times slower than the truth, and slowed the training run it was competing with by 30%.
+The device was verified idle by repeating one batch size at the start and end of the compute sweep: the two agreed within 3.6%. The loading numbers are not bracketed by this check, a known limitation of the instrument. The check exists because reading free memory does not work here --
+an earlier version of this probe saw most of a busy device as free, produced timings far from the truth, and slowed the training run it was competing with. The records of that episode were not retained.
 ```
 
 ## 4. Numerical precision
