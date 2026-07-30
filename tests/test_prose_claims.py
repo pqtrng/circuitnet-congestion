@@ -74,6 +74,7 @@ PHRASE = re.compile(
     r"(?:times|percent|per\s+cent|orders|hundred|thousand|million|faster|slower)\b",
     re.IGNORECASE,
 )
+ARTEFACT_REF = re.compile(r"results/probes/[A-Za-z0-9_]+\.json")
 
 
 def _emit(text: str, rel_path: str, found: set[str]) -> None:
@@ -185,4 +186,34 @@ def test_baseline_has_no_orphaned_entries() -> None:
     assert not orphans, (
             "These baseline entries no longer match any source line. Delete them:\n  "
             + "\n  ".join(orphans)
+    )
+
+
+def _pointer_sources() -> list[Path]:
+    paths: list[Path] = []
+    for root in PY_ROOTS:
+        paths.extend(sorted((ROOT / root).rglob("*.py")))
+    for pattern in TEXT_GLOBS:
+        paths.extend(sorted(ROOT.glob(pattern)))
+    return paths
+
+
+def test_artefact_pointers_resolve() -> None:
+    """A pointer left in place of a number has to lead somewhere.
+
+    Measurements are removed from prose and replaced by a path into the probe
+    output. If the path is wrong, or the artefact is renamed, the sentence
+    becomes an unsupported claim wearing a citation, which is worse than the
+    number it replaced.
+    """
+    missing: list[str] = []
+    for path in _pointer_sources():
+        rel_path = path.relative_to(ROOT).as_posix()
+        if rel_path == SELF:
+            continue
+        for match in ARTEFACT_REF.finditer(path.read_text(encoding="utf-8")):
+            if not (ROOT / match.group(0)).is_file():
+                missing.append(f"{rel_path}: {match.group(0)}")
+    assert not missing, "prose points at artefacts that do not exist:\n  " + "\n  ".join(
+        missing
     )

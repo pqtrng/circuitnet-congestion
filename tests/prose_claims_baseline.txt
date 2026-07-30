@@ -69,20 +69,6 @@ src/circuitnet_congestion/models/unet.py::range is not the reason: the largest a
 src/circuitnet_congestion/models/unet.py::roughly 1.5% of valid pixels are non-zero. Pooling destroys exactly that band.
 src/circuitnet_congestion/models/unet.py::single-precision step time on this class of accelerator, and bfloat16 at 4.8:
 src/circuitnet_congestion/training/dataset.py::they are merged, neither the loss nor the evaluation can tell them apart. 42% of
-src/circuitnet_congestion/training/losses.py::a mean of per-patch means. Patch coverage ranges from 1.6% to 100% of the
-src/circuitnet_congestion/training/losses.py::already amplifies large targets, and 0.13% of valid pixels carry 67% of the
-src/circuitnet_congestion/training/losses.py::conditional mean, which for a pixel that is a hotspot with probability 0.3 and
-src/circuitnet_congestion/training/losses.py::deterministic. Roughly two percent of positive pixels sit on it, which is why
-src/circuitnet_congestion/training/losses.py::edge fragment count up to sixty-four times as much as a pixel of a full patch.
-src/circuitnet_congestion/training/losses.py::five percent. The level 1/20 is exactly five percent and is excluded by the
-src/circuitnet_congestion/training/losses.py::hundred distinct non-zero levels, and around 0.05 they are dense enough that no
-src/circuitnet_congestion/training/losses.py::mean of squared targets 3.31e-05 (the loss of a zero predictor)
-src/circuitnet_congestion/training/losses.py::metal layer. Across the three splits there are between three hundred and six
-src/circuitnet_congestion/training/losses.py::non-zero fraction 1.52%
-src/circuitnet_congestion/training/losses.py::squared targets. On a target where 98.5% of valid pixels are zero, a small
-src/circuitnet_congestion/training/losses.py::targets above 0.05 0.13% of pixels, 67% of total squared error
-src/circuitnet_congestion/training/losses.py::targets above 0.20 0.0014% of pixels, 40% of total squared error
-src/circuitnet_congestion/training/losses.py::value 0.07 sits at 0.021 -- below any usable hotspot threshold. The model then
 src/circuitnet_congestion/training/train.py::# worker startup and context initialisation, and is several times slower on any
 src/circuitnet_congestion/training/train.py::1.03 times the error of predicting zero everywhere. The model that detects
 src/circuitnet_congestion/training/train.py::analysis.probe_precision half precision runs at 4.7 times the single-precision
