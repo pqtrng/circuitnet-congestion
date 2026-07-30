@@ -61,13 +61,6 @@ docs/training_decisions.md.tmpl::means would let a pixel in a small edge fragmen
 docs/training_decisions.md.tmpl::three times.
 docs/training_decisions.md.tmpl::value 0.07 sits below any usable threshold. The model then predicts a smooth
 docs/training_decisions.md.tmpl::zero-initialised, predictions ran two orders of magnitude above any target, and
-src/circuitnet_congestion/models/unet.py::# prior: roughly 98.5% of valid target pixels are zero, so a model that
-src/circuitnet_congestion/models/unet.py::# two orders of magnitude larger than any target in this dataset. Second,
-src/circuitnet_congestion/models/unet.py::Training runs in single precision. Half precision was measured at 4.7 times the
-src/circuitnet_congestion/models/unet.py::against a half-precision ceiling of 65504.
-src/circuitnet_congestion/models/unet.py::range is not the reason: the largest activation this network produces is 5.3
-src/circuitnet_congestion/models/unet.py::roughly 1.5% of valid pixels are non-zero. Pooling destroys exactly that band.
-src/circuitnet_congestion/models/unet.py::single-precision step time on this class of accelerator, and bfloat16 at 4.8:
 src/circuitnet_congestion/training/dataset.py::they are merged, neither the loss nor the evaluation can tell them apart. 42% of
 tests/test_losses.py::a meaningful gap. The level 1/20 is exactly five percent and the strict
 tests/test_losses.py::percent. Levels around 0.05 are dense -- between three hundred and six

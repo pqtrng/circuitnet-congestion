@@ -3,8 +3,10 @@
 Design decisions worth stating explicitly, because each one is load-bearing for
 the evaluation argument this project is built around:
 
-Skip connections. Congestion hotspots are a sparse, high-frequency signal --
-roughly 1.5% of valid pixels are non-zero. Pooling destroys exactly that band.
+Skip connections. Congestion hotspots are a sparse, high-frequency signal: only
+a small fraction of valid target pixels are non-zero (recorded under
+``splits.train.nonzero_fraction_of_valid`` in
+``results/probes/target_stats.json``). Pooling destroys exactly that band.
 Without skips the decoder produces smooth blurred fields, which score well on
 pixel-averaged metrics while missing every hotspot. The architecture therefore
 has to be able to represent sharp localised structure before any claim about the
@@ -24,12 +26,14 @@ accepted during training and clamped at evaluation time.
 Convolutions preceding a normalisation layer carry no bias term -- the batch-norm
 shift parameter already provides it.
 
-Training runs in single precision. Half precision was measured at 4.7 times the
-single-precision step time on this class of accelerator, and bfloat16 at 4.8:
-the hardware has no dedicated matrix units, so a narrower format buys no
-arithmetic throughput and the cost is pure casting overhead. Numerical
-range is not the reason: the largest activation this network produces is 5.3
-against a half-precision ceiling of 65504.
+Training runs in single precision. The step-time measurements behind that
+choice are recorded under ``modes`` in ``results/probes/precision.json`` and
+discussed in the training module docstring, which is the one place this project
+argues the point. An earlier version of this paragraph also cited an activation
+ceiling with headroom against the float16 maximum; that claim is withdrawn,
+because the probe behind it measures the model at initialisation rather than
+after training. The range question stays open until re-measured from a trained
+checkpoint.
 """
 
 from __future__ import annotations
@@ -71,9 +75,11 @@ class UNet(nn.Module):
 
     Default width is deliberately modest (base 32, ~7.8M parameters). The
     constraint is not capacity but iteration count: this baseline is trained
-    twice under two different loss formulations, and it has to fit alongside
-    mixed-precision activations at a batch size large enough to keep batch
-    normalisation statistics stable.
+    twice under two different loss formulations, and it has to fit -- in single
+    precision, which is how training runs -- at a batch size large enough to
+    keep batch normalisation statistics stable. The safe batch-size region on
+    this machine is recorded under ``summary`` in
+    ``results/probes/throughput.json``.
     """
 
     def __init__(
@@ -136,11 +142,14 @@ class UNet(nn.Module):
         # The 1x1 head is initialised to zero rather than by the Kaiming rule
         # above. Two reasons. First, correctness: Kaiming with mode="fan_out" on
         # a 1x1 convolution having a single output channel computes fan_out = 1,
-        # hence a weight standard deviation of sqrt(2), which yields predictions
-        # two orders of magnitude larger than any target in this dataset. Second,
-        # prior: roughly 98.5% of valid target pixels are zero, so a model that
-        # begins by predicting zero everywhere begins near the marginal optimum
-        # and descends from a well-conditioned point.
+        # hence a weight standard deviation of sqrt(2) -- the widest
+        # initialisation in the network, applied to the one layer whose output
+        # is compared directly to the targets. Second, prior: most valid target
+        # pixels are zero (the train-split fraction is recorded under
+        # ``splits.train.nonzero_fraction_of_valid`` in
+        # ``results/probes/target_stats.json``), so a model that begins by
+        # predicting zero everywhere begins near the marginal optimum and
+        # descends from a well-conditioned point.
         nn.init.zeros_(self.head.weight)
         nn.init.zeros_(self.head.bias)
 
