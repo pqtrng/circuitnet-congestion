@@ -2,22 +2,23 @@
 
 Renders the measurement written by analysis.probe_precision.
 
-Two earlier claims in this repository did not survive being measured. Half
-precision was said to produce non-finite values on the first forward pass, and
-squared errors were said to reach the bottom of its dynamic range. Neither
-reproduces, and both are reported here rather than quietly dropped: the
-observation was real, but it was made before the output head was
-zero-initialised, when predictions ran two orders of magnitude above any target
-and the resulting errors genuinely did overflow.
+The decision rests on the timings alone. Both half-width formats run the same
+training step materially slower than single precision on this machine; the
+figures are in ``modes`` in ``results/probes/precision.json`` and the table
+below restates them from that record. Timing depends on shapes, dtypes and
+kernel selection rather than on weight values, so it is the one block of the
+artefact that transfers to real training.
 
-The decision did not change, because it never rested on those claims alone. On
-an accelerator without dedicated matrix units, half precision is simply slower
-and uses more memory, since autocast keeps both copies of the weights while the
-narrower format buys no arithmetic throughput.
-
-Bfloat16 appears as a control, not a candidate. It has single precision's
-exponent range with fewer mantissa bits, so if half precision were failing on
-range, bfloat16 would survive where it did not.
+The numerical-range claims that used to accompany the timing argument are
+withdrawn in both directions. Half precision was once said to produce
+non-finite values and to push squared errors below its exponent floor; the
+records behind that observation were not retained, so whether it was real
+cannot be established. The replacement claim -- an activation ceiling with
+ample headroom -- came from measurements of the model at initialisation, where
+a zero-initialised head makes every examined error a squared target. The
+report therefore renders the stability and range blocks as measurements of
+initialisation, labelled as such, and lets the timing table carry the
+decision.
 """
 
 from __future__ import annotations
@@ -55,9 +56,9 @@ def _mode_table(record: dict[str, Any]) -> list[str]:
     lines += [
         "",
         f"Half precision costs {half['ms_per_image'] / single['ms_per_image']:.1f} times the "
-        "step time. This accelerator has no dedicated matrix units, so the narrower",
-        "format buys no arithmetic throughput and the cost is pure overhead from casting",
-        "and from the loss scaler.",
+        "step time. On this machine the narrower format buys no arithmetic",
+        "throughput, and the slowdown is consistent with overhead from casting and",
+        "from the loss scaler rather than with any gain being available.",
     ]
 
     if control:
@@ -88,13 +89,12 @@ def _range_evidence(record: dict[str, Any]) -> list[str]:
     limits = record["format_limits"]
 
     lines = [
-        "Numerical range is not the reason, and an earlier claim that it was does not",
-        "reproduce:",
+        "The stability and range blocks, labelled for what they measure:",
         "",
-        f"  largest activation anywhere in the network   {activation['largest_activation']:.1f}"
+        f"  largest activation, model at initialisation  {activation['largest_activation']:.1f}"
         f"  (from {activation['produced_by']})",
-        f"  half precision ceiling                       {activation['float16_ceiling']:.0f}",
-        f"  headroom                                     {activation['headroom_factor']:.0f}x",
+        f"  half precision finite ceiling                "
+        f"{activation['float16_ceiling']:.0f}",
         "",
         f"  squared errors examined                      "
         f"{magnitudes['squared_errors_examined']:,} valid pixels",
@@ -105,11 +105,20 @@ def _range_evidence(record: dict[str, Any]) -> list[str]:
         f"  smallest non-zero squared error seen         "
         f"{magnitudes['smallest_non_zero_squared_error']:.2e}",
         "",
-        "Nothing overflows and nothing underflows. The original observation was made",
-        "before the output head was zero-initialised: predictions then ran two orders of",
-        "magnitude above any target, and the squared errors that followed did overflow.",
-        "Fixing the initialisation removed the numerical problem without changing the",
-        "conclusion, which is why the conclusion needed a different reason.",
+        "These are measurements of the model at initialisation. The output head is",
+        "zero-initialised, so the network emits exact zeros and every squared error",
+        "examined above is a squared target; the activation range is a property of",
+        "initialisation, taken in eval mode on random input. Nothing here supports a",
+        "claim about numerical behaviour during training, in either direction: not",
+        "the withdrawn claim that half precision overflows, and not the withdrawn",
+        "claim of comfortable headroom. The question stays open until these numbers",
+        "are re-taken from a trained checkpoint.",
+        "",
+        "An earlier note said half precision produced non-finite values before the",
+        "head was zero-initialised. The records behind that observation were not",
+        "retained; the mechanism it described is arithmetically plausible for a",
+        "Kaiming-initialised single-channel head, but plausibility is not a",
+        "measurement.",
     ]
 
     control = next((m for m in record["modes"] if m["mode"] == "bfloat16"), None)
@@ -118,9 +127,10 @@ def _range_evidence(record: dict[str, Any]) -> list[str]:
             "",
             "Bfloat16 is included as a control. It carries the exponent range of single",
             f"precision with {limits['bfloat16']['mantissa_bits']} mantissa bits against "
-            f"half precision's {limits['float16']['mantissa_bits']}, so a failure of range",
-            "would show up in one and not the other. Both are finite here, which is",
-            "consistent with range never having been the constraint.",
+            f"half precision's {limits['float16']['mantissa_bits']}, so once these",
+            "measurements come from a trained checkpoint, a failure of range would show",
+            "up in one format and not the other. On a zero-output model both are finite",
+            "by construction, which discriminates nothing.",
         ]
     return lines
 
@@ -132,7 +142,8 @@ def _caveat(record: dict[str, Any]) -> list[str]:
             "CONTENDED. The repeated single-precision measurement drifted by "
             f"{check.get('relative_drift', float('nan')):.1%}, so another process was using",
             "the accelerator. The timings describe an unknown competing load and should",
-            "not be quoted; the finiteness and range results do not depend on timing.",
+            "not be quoted; the finiteness and range blocks do not depend on timing,",
+            "though per the section above they describe initialisation only.",
         ]
     return [
         "The device was verified idle by repeating the single-precision measurement at "

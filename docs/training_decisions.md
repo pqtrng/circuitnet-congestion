@@ -216,9 +216,9 @@ Identical training steps under each precision mode:
   float16        24.37    4.73x    2.86G    1.39x         yes
   bfloat16       24.88    4.83x    1.05G    0.51x         yes
 
-Half precision costs 4.7 times the step time. This accelerator has no dedicated matrix units, so the narrower
-format buys no arithmetic throughput and the cost is pure overhead from casting
-and from the loss scaler.
+Half precision costs 4.7 times the step time. On this machine the narrower format buys no arithmetic
+throughput, and the slowdown is consistent with overhead from casting and
+from the loss scaler rather than with any gain being available.
 
 Bfloat16 lands at 4.8 times as well. Two formats with different mantissa widths agreeing this closely is
 what a hardware property looks like, rather than a quirk of one of them.
@@ -228,28 +228,36 @@ bfloat16 does at 0.51x while half precision reports 1.39x. The difference is aut
 have nothing to do with the format's width -- the same effect makes peak allocation non-monotonic in batch size in the throughput probe. The case for
 single precision rests on the timings alone.
 
-Numerical range is not the reason, and an earlier claim that it was does not
-reproduce:
+The stability and range blocks, labelled for what they measure:
 
-  largest activation anywhere in the network   5.3  (from decoders.3.block.0)
-  half precision ceiling                       65504
-  headroom                                     12321x
+  largest activation, model at initialisation  5.3  (from decoders.3.block.0)
+  half precision finite ceiling                65504
 
   squared errors examined                      7,116,839 valid pixels
   half precision smallest normal               6.10e-05
   fraction falling below it                    0.0%
   smallest non-zero squared error seen         1.88e-04
 
-Nothing overflows and nothing underflows. The original observation was made
-before the output head was zero-initialised: predictions then ran two orders of
-magnitude above any target, and the squared errors that followed did overflow.
-Fixing the initialisation removed the numerical problem without changing the
-conclusion, which is why the conclusion needed a different reason.
+These are measurements of the model at initialisation. The output head is
+zero-initialised, so the network emits exact zeros and every squared error
+examined above is a squared target; the activation range is a property of
+initialisation, taken in eval mode on random input. Nothing here supports a
+claim about numerical behaviour during training, in either direction: not
+the withdrawn claim that half precision overflows, and not the withdrawn
+claim of comfortable headroom. The question stays open until these numbers
+are re-taken from a trained checkpoint.
+
+An earlier note said half precision produced non-finite values before the
+head was zero-initialised. The records behind that observation were not
+retained; the mechanism it described is arithmetically plausible for a
+Kaiming-initialised single-channel head, but plausibility is not a
+measurement.
 
 Bfloat16 is included as a control. It carries the exponent range of single
-precision with 7 mantissa bits against half precision's 10, so a failure of range
-would show up in one and not the other. Both are finite here, which is
-consistent with range never having been the constraint.
+precision with 7 mantissa bits against half precision's 10, so once these
+measurements come from a trained checkpoint, a failure of range would show
+up in one format and not the other. On a zero-output model both are finite
+by construction, which discriminates nothing.
 
 The device was verified idle by repeating the single-precision measurement at the start and end of the run: the two agreed within 0.3%.
 ```

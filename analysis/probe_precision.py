@@ -1,25 +1,30 @@
-"""Probe: why this baseline trains in single precision.
+"""Probe: timings and numerical observations behind the single-precision choice.
 
-Three separate claims support that choice and each is measured here rather than
-asserted.
+What this records, stated precisely, because its output has been misread
+before -- twice, in opposite directions.
 
-Stability. Half precision produces non-finite values on the first forward pass.
-The probe records the largest activation the network produces against the
-finite ceiling of the format, so the mechanism is visible rather than inferred
-from a NaN appearing somewhere.
+Throughput. Each precision mode runs identical training steps on identical
+shapes and is timed. Step time depends on shapes, dtypes and kernel selection,
+not on the values of the weights, so these timings transfer to real training.
+They are recorded under ``modes`` and they are the only part of this artefact
+that supports the precision decision.
 
-Dynamic range. Targets sit around 1e-2 and squared errors reach 1e-6, which is
-where half precision runs out of exponent. The fraction of squared-error values
-falling below the format's smallest normal is measured on real patches.
+Activations and error magnitudes. Both are taken from the model as
+constructed. The output head is zero-initialised, so the network emits exact
+zeros, every squared error examined here is a squared target, and the recorded
+activation range is a property of initialisation, taken in eval mode on random
+input. Neither quantity describes a trained model, and neither supports a
+claim about numerical behaviour during training -- not the original claim that
+half precision overflows, and not the later claim of comfortable headroom.
+Both readings have been withdrawn from the module docstrings that carried
+them. Whether half precision fails on a trained checkpoint stays open until
+these measurements are re-taken from one.
 
-Throughput. On an accelerator without dedicated matrix units, half precision
-executes at the same rate as single precision, so the usual argument for it
-does not apply. Both are timed.
-
-Bfloat16 is included as a control rather than as a candidate. It carries the
-exponent range of single precision with fewer mantissa bits, so if it survives
-where half precision fails, the failure is one of range and not of precision.
-That distinction is the point; nothing here recommends training in it.
+Bfloat16 is included as a control rather than as a candidate: it carries the
+exponent range of single precision with fewer mantissa bits, so a range
+failure and a precision failure would separate the two half-width formats. The
+control becomes informative only once the quantities feeding it describe
+training, which, per the paragraph above, they do not yet.
 """
 
 from __future__ import annotations
@@ -86,10 +91,11 @@ def format_limits() -> dict[str, dict[str, float]]:
 
 
 def largest_activation(device: torch.device) -> dict[str, Any]:
-    """The largest value the network produces internally, against fp16's ceiling.
+    """The largest value the network produces at initialisation, on random input.
 
-    Half precision fails on the forward pass, not on the update, so the useful
-    question is whether any intermediate tensor leaves the representable range.
+    Recorded against fp16's finite ceiling for the record. The model is freshly
+    constructed and never trained, so this bounds nothing about training; see
+    the module docstring.
     """
     torch.manual_seed(0)
     model = UNet().to(device).eval()

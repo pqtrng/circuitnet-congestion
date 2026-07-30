@@ -37,11 +37,9 @@ README.md::| val | Vortex-large | 6,641 | 0.955% | 1.30e-05 |
 README.md::| weighted | highest F1 | 7 | 1.296 | **0.0740** |
 README.md::| weighted | lowest error | 9 | 1.187 | 0.0503 |
 analysis/audit_optimisation.py::landed at 0.03, 0.34 and 0.79 of the baseline on separate runs at an identical
-analysis/audit_precision.py::zero-initialised, when predictions ran two orders of magnitude above any target
 analysis/audit_throughput.py::more than the device physically has and ran seven times slower per image
 analysis/probe_optimisation.py::0.03, 0.34 and 0.79 of the baseline on separate runs at an identical seed, a
 analysis/probe_optimisation.py::is what a target with 98.5% zeros does to optimisation: the trivial solution is
-analysis/probe_precision.py::Dynamic range. Targets sit around 1e-2 and squared errors reach 1e-6, which is
 analysis/probe_throughput.py::can therefore be several times slower than one chosen from a measurement, with
 analysis/probe_throughput.py::collapsing by several times. A configuration chosen from a memory figure alone
 analysis/probe_throughput.py::half times slower than the truth, and slowed that training run by 30% in the
