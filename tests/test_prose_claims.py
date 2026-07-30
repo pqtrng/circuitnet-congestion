@@ -15,12 +15,17 @@ docstring of ``tests/test_losses`` asserts a property of the suite that the suit
 does not have, and this test cannot see it. Claims of that kind are reviewed by
 hand and recorded in the decision document, not here.
 
-The baseline has two sections:
+The baseline has two sections, split by one question: can this number drift away
+from what it describes without anyone noticing?
 
-  INVARIANT  facts fixed by the architecture or the file format -- tensor shapes,
-             patch size, dtype literals, hash algorithm names. These stay.
-  PENDING    measured quantities awaiting relocation into an artefact, with a
-             pointer left in their place. This section must shrink to zero.
+  INVARIANT  It cannot. Tensor shapes, patch size, dtype literals, names of hash
+             algorithms and other standards, and values a test defines for its
+             own use. A figure fixed by code rather than by data belongs here
+             only once a test pins it; until then it drifts like any measurement.
+  PENDING    It can. Quantities measured from the dataset or the hardware, and
+             worked examples whose values are hypothetical but not said to be.
+             Each is relocated into an artefact with a pointer left in its place.
+             This section must reach zero.
 
 Regenerate with ``UPDATE_PROSE_BASELINE=1 pytest tests/test_prose_claims.py``.
 New entries always land in PENDING; promoting one to INVARIANT is a manual edit,
@@ -149,7 +154,7 @@ def _write_baseline(claims: set[str]) -> None:
         "# move a line between sections to reclassify it, delete it once the",
         "# source line no longer carries a quantity.",
         "",
-        f"{INVARIANT_HEADER} -- architecture and format facts. Permanent.",
+        f"{INVARIANT_HEADER} -- cannot drift: architecture, format, standards, fixtures.",
         *keep,
         "",
         f"{PENDING_HEADER} -- measurements to relocate. Must reach zero.",

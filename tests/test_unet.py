@@ -7,6 +7,9 @@ default depth's downsampling factor.
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 import pytest
 import torch
 from torch import nn
@@ -20,6 +23,7 @@ from circuitnet_congestion.models.unet import (
 )
 
 SIZE = 32
+CANONICAL_RUNS = ("unet_a", "unet_b")
 
 
 def test_output_shape_matches_input_resolution() -> None:
@@ -158,3 +162,26 @@ def test_construction_is_deterministic_under_a_fixed_seed() -> None:
 
     for left, right in zip(first.parameters(), second.parameters(), strict=True):
         assert torch.equal(left, right)
+
+
+def test_default_parameter_count_is_pinned_and_matches_the_run_records() -> None:
+    """Pin the size of the default architecture.
+
+    The width choice is stated as a parameter count in the module docstring and
+    in the README. Nothing enforced it: altering ``base_channels`` or ``depth``
+    would leave both claims silently wrong, so a figure fixed by code drifted
+    exactly like a measurement.
+
+    The same number decides whether the checkpoints published for the completed
+    runs still load into this code. A shape change makes every one of them
+    unusable, and the failure would surface as a state-dict error during
+    evaluation rather than here, where it belongs.
+    """
+    expected = 7_849_601
+    assert count_parameters(UNet()) == expected
+
+    root = Path(__file__).resolve().parents[1]
+    for name in CANONICAL_RUNS:
+        record = root / "results" / name / "run.json"
+        payload = json.loads(record.read_text(encoding="utf-8"))
+        assert payload["model"]["parameters"] == expected, name
