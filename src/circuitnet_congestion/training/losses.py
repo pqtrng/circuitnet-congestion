@@ -34,9 +34,10 @@ DEFAULT_HOTSPOT_THRESHOLD. That value is itself one of the quantisation levels
 present in the data rather than a gap between two of them, and the strict
 comparison below excludes the pixels sitting exactly on it. Their count is
 recorded per split as ``pixels_on_threshold``; measured against the pixels the
-strict comparison does admit, the excluded group is not negligible and its
-relative size differs between splits, which is why evaluation reports a range of
-thresholds rather than a single number.
+strict comparison does admit, the excluded group is not negligible, and its
+relative size already differs materially between the training and validation
+splits, which is why evaluation reports a range of thresholds rather than a
+single number.
 
 Determinism of that boundary depends on the comparison happening in the tensors'
 own dtype. Targets are stored as float32; the Python threshold constant is

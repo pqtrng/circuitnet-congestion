@@ -29,7 +29,8 @@ Three consequences follow, and each one changes a decision made later in this
 document. Absolute error cannot be compared across splits, because the error of
 predicting zero everywhere differs between them by an order of magnitude. The
 hotspot threshold cannot be placed in a gap between quantisation levels, because
-at the relevant scale there is no gap; it is defined physically instead, as
+on the training split alone there is no gap at the relevant scale; it is defined
+physically instead, as
 demand exceeding capacity by more than five percent, and the level sitting
 exactly at five percent is excluded by a strict comparison. And the concentration
 of squared error in the extreme tail is a property of the training split rather
@@ -461,6 +462,12 @@ without those, a reported number has no link to the model that produced it.
 - Every result here comes from a single seed per configuration. No claim is made
   about variance across seeds, and the selection gap in section 6 has not been
   measured against seed variation.
+- No model output has touched the test split, but two of its target statistics
+  have been computed and were cited in design rationales: the count of pixels
+  sitting exactly on the threshold, in the argument for evaluating a range of
+  thresholds, and the distinct-level count, in the argument that no threshold
+  sits in a gap. Both rationales are now anchored to the training split, with
+  the cross-split spread kept as corroboration; this note is the disclosure.
 - Checkpoints are selected on the validation split, which is the sparsest of the
   three by a wide margin. Model selection therefore happens on a distribution
   unlike the one the model is finally scored against. This is not corrected for.

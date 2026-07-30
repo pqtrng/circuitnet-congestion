@@ -2,8 +2,9 @@
 
 These pin down three things that are easy to break silently: that padded pixels
 cannot influence any reported number, that reduction is a single global mean
-rather than a mean of per-patch means, and that the default hotspot weight is
-the value derived from the shrinkage argument rather than a number someone liked.
+rather than a mean of per-patch means, and that the default hotspot weight clears
+the lower bound the shrinkage argument derives. The bound is derived; the margin
+above it is a choice, and the choice is pinned so it cannot drift silently.
 """
 
 from __future__ import annotations
@@ -62,7 +63,9 @@ def test_reduction_is_global_not_a_mean_of_patch_means() -> None:
 
 def test_zero_predictor_baseline_equals_mean_of_squared_targets() -> None:
     """The trivial baseline of the task: no error figure is interpretable
-    without it, given that ~98.5% of valid target pixels are zero."""
+    without it, given that the overwhelming majority of valid target pixels are
+    zero (``splits.train.nonzero_fraction_of_valid`` in
+    ``results/probes/target_stats.json``)."""
     torch.manual_seed(0)
     target = (torch.rand(3, 1, 16, 16) < 0.02).float() * 0.07
     mask = (torch.rand(3, 1, 16, 16) > 0.25).float()
@@ -95,11 +98,13 @@ def test_hotspot_weight_is_binary_and_target_driven() -> None:
 
 def test_hotspot_threshold_is_a_level_excluded_by_a_strict_comparison() -> None:
     """A hotspot is a cell exceeding its track capacity by more than five
-    percent. Levels around 0.05 are dense -- between three hundred and six
-    hundred distinct non-zero values occur per split -- so no threshold sits in
-    a meaningful gap. The level 1/20 is exactly five percent and the strict
-    comparison excludes it, deliberately. Both round to the same
-    single-precision value, so the boundary does not depend on rounding."""
+    percent. Levels near the threshold are dense on the training split alone
+    (``splits.train.distinct_nonzero_values`` and
+    ``splits.train.levels_near_threshold`` in
+    ``results/probes/target_stats.json``), so no threshold sits in a meaningful
+    gap. The level 1/20 is exactly five percent and the strict comparison
+    excludes it, deliberately. Both round to the same single-precision value,
+    so the boundary does not depend on rounding."""
     level = torch.tensor([1 / 20], dtype=torch.float32)
     threshold = torch.tensor([DEFAULT_HOTSPOT_THRESHOLD], dtype=torch.float32)
 
@@ -153,6 +158,24 @@ def test_default_weight_lifts_the_shrunk_optimum_over_the_threshold() -> None:
 
     assert unweighted < DEFAULT_HOTSPOT_THRESHOLD
     assert weighted > DEFAULT_HOTSPOT_THRESHOLD
+
+
+def test_default_weight_clears_the_derived_bound_and_is_pinned() -> None:
+    """The closed form yields a lower bound, not the default. Solving the
+    shrunk-optimum inequality for the illustrative pixel gives the smallest
+    weight that lifts the optimum over the threshold; the default sits above
+    that bound with margin, and the margin is a choice. The equality below pins
+    the choice so it cannot drift in a refactor -- changing it is a decision to
+    be made in the open, not an edit."""
+    probability, value = 0.3, 0.07
+    bound = (
+        DEFAULT_HOTSPOT_THRESHOLD
+        * (1 - probability)
+        / (probability * (value - DEFAULT_HOTSPOT_THRESHOLD))
+    )
+    assert bound == pytest.approx(35 / 6)
+    assert DEFAULT_POSITIVE_WEIGHT > bound
+    assert DEFAULT_POSITIVE_WEIGHT == 10.0
 
 
 def test_accumulator_matches_a_single_pass() -> None:

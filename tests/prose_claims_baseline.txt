@@ -25,11 +25,9 @@ src/circuitnet_congestion/training/dataset.py::gt : float32 [128, 128] raw conge
 src/circuitnet_congestion/training/dataset.py::mask : uint8 [128, 128] 1 = real die area, 0 = edge zero-padding
 tests/test_dataset.py::The mask is cast at read time: it is summed over 16384 pixels downstream,
 tests/test_gold.py::# mean over VALID pixels only = 10.0 (not diluted by padded zeros)
+tests/test_losses.py::gap. The level 1/20 is exactly five percent and the strict comparison
 tests/test_metrics.py::probability 0.3 and value 0.07. This minimises squared error and detects
 tests/test_silver.py::# gt = max(0, 0.3) = 0.3, no crash from int dtype
 tests/test_silver.py::# max(0.5, 0.3)
 
 # PENDING -- measurements to relocate. Must reach zero.
-tests/test_losses.py::a meaningful gap. The level 1/20 is exactly five percent and the strict
-tests/test_losses.py::percent. Levels around 0.05 are dense -- between three hundred and six
-tests/test_losses.py::without it, given that ~98.5% of valid target pixels are zero.
