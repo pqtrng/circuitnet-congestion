@@ -1,19 +1,32 @@
-"""Audit: disagreement between checkpoint selection rules.
+"""Audit: disagreement between checkpoint selection rules, and what is loadable.
 
 Renders the measurement written by analysis.probe_selection_gap. The probe
-needs run histories; this reads the committed JSON, so `make report` works for
-a reader who has cloned the repository and has no data and no accelerator.
+needs run histories and the machine of record; this reads the committed JSON,
+so `make report` works for a reader who has cloned the repository and has no
+data and no accelerator.
 
-Every run is listed with its epoch count rather than filtered by it. A run that
-was superseded, or one that was still in progress when the probe ran, is real
-measurement and hiding it would defeat the purpose of the record. Short runs
-are shown but kept out of the headline range: a ratio taken against an F1 near
-zero is arithmetically large and carries no information.
+Two questions are kept separate because conflating them produced a wrong
+report once. What did each rule select? -- answered by post-hoc replay over
+recorded history, for every run including superseded ones, with no requirement
+that weights exist. Which selections can be loaded? -- answered from the
+checkpoint files recorded per run and their existence at probe time on the
+machine of record. A selection in the first table and absent from the second
+is a measurement about a model that cannot be loaded; several are, and the
+report says which.
+
+Provenance is rendered, not asserted: worktree state comes from each run
+record, and the committed-code comparison between the canonical runs is
+executed against this clone's git objects, with an explicit unverifiable
+outcome when the clone cannot answer.
+
+Short runs are shown but kept out of the headline range: a ratio taken against
+an F1 near zero is arithmetically large and carries no information.
 """
 
 from __future__ import annotations
 
 import json
+import subprocess
 from pathlib import Path
 from typing import Any
 
@@ -42,14 +55,25 @@ def _format_run(name: str, run: dict[str, Any]) -> list[str]:
         f"{name}{marker}",
         f"  loss={run['loss']}  epochs={run['epochs_recorded']}  "
         f"zero-predictor baseline={run['baseline_val_zero_predictor_mse']:.4e}",
-        f"  {'selected by':<24} {'epoch':>5} {'error/baseline':>15} {'F1':>8} {'recall':>8}",
+        f"  {'selected by':<24} {'epoch':>5} {'error/baseline':>15} {'F1':>8} "
+        f"{'recall':>8}  {'weights':<9}",
     ]
 
     for rule, chosen in run["selections"].items():
         ratio = chosen.get("val_mse_over_baseline")
+        files = chosen.get("checkpoint_files")
+        if files is None:
+            weights = "?"
+        elif not files:
+            weights = "none"
+        elif chosen.get("deployable"):
+            weights = f"{sum(1 for f in files if f['exists'])} file(s)"
+        else:
+            weights = "gone"
         lines.append(
             f"  {RULE_LABELS.get(rule, rule):<24} {chosen['epoch']:>5} "
             f"{ratio:>15.4f} {chosen['val_f1']:>8.4f} {chosen['val_recall']:>8.4f}"
+            f"  {weights:<9}"
         )
 
     gap = run["gap_between_error_and_f1"]
@@ -78,13 +102,134 @@ def _format_run(name: str, run: dict[str, Any]) -> list[str]:
     return lines
 
 
+def _deployable(runs: dict[str, Any]) -> list[str]:
+    lines = [
+        "Deployable selections -- rows exist only where a checkpoint file covering",
+        "the selected epoch still existed when the probe ran on the machine of",
+        "record. Weights are excluded from the repository, so this is a recorded",
+        "snapshot, not a property of this clone.",
+        "",
+        f"  {'run':<34} {'selected by':<24} {'epoch':>5}  {'file':<22} {'sha256':<12}  worktree",
+    ]
+    objective_file_seen = False
+    recorded = surviving = sup_recorded = sup_surviving = 0
+    for name, run_entry in sorted(runs.items(), key=_sort_key):
+        recorded += run_entry.get("checkpoints_recorded", 0)
+        surviving += run_entry.get("checkpoints_surviving", 0)
+        if run_entry["superseded"]:
+            sup_recorded += run_entry.get("checkpoints_recorded", 0)
+            sup_surviving += run_entry.get("checkpoints_surviving", 0)
+        git = run_entry.get("git") or {}
+        tree = "dirty" if git.get("dirty") else "clean" if git else "?"
+        for rule, chosen in run_entry["selections"].items():
+            if not chosen.get("deployable"):
+                continue
+            for f in chosen["checkpoint_files"]:
+                if not f["exists"]:
+                    continue
+                if f["file"] == "best_val_objective.pt":
+                    objective_file_seen = True
+                digest = (f.get("sha256") or "?")[:12]
+                lines.append(
+                    f"  {name:<34} {RULE_LABELS.get(rule, rule):<24} "
+                    f"{chosen['epoch']:>5}  {f['file']:<22} {digest:<12}  {tree}"
+                )
+    if lines[-1].endswith("worktree"):
+        lines.append("  (none -- no recorded checkpoint file survived at probe time)")
+    lines += [
+        "",
+        f"Across all runs {recorded} checkpoint digests are recorded and "
+        f"{surviving} files survived at probe time. The superseded runs retain "
+        f"{sup_recorded} digests and {sup_surviving} files: their disagreement "
+        "survives in the metrics while the models behind it do not.",
+    ]
+    if objective_file_seen:
+        lines += [
+            "",
+            "best_val_objective.pt is matched to a selection by epoch alone. The",
+            "quantity the loop tracked under that name is the run's own validation",
+            "objective, which is not the replayed weighted-error metric, despite",
+            "the similar name.",
+        ]
+    return lines
+
+
+def _provenance(runs: dict[str, Any]) -> list[str]:
+    canonical = {n: r for n, r in runs.items() if not r["superseded"]}
+    lines = ["Provenance of the canonical runs:", ""]
+    revisions = []
+    dirty_runs = []
+    for name, run_entry in sorted(canonical.items()):
+        git = run_entry.get("git")
+        if not git:
+            lines.append(f"  {name}: no git block in the run record")
+            continue
+        rev = git.get("revision", "")
+        tree = "dirty worktree" if git.get("dirty") else "clean worktree"
+        lines.append(f"  {name}: revision {rev[:10]}, {tree}")
+        revisions.append(rev)
+        if git.get("dirty"):
+            dirty_runs.append(name)
+
+    distinct = sorted(set(filter(None, revisions)))
+    if len(distinct) == 2:
+        a, b = distinct
+        try:
+            result = subprocess.run(
+                ["git", "diff", "--quiet", a, b, "--", "src", "configs"],
+                capture_output=True,
+                text=True,
+            )
+            code = result.returncode
+        except OSError:
+            code = None
+        lines.append("")
+        if code == 0:
+            lines.append(
+                "The committed training code is identical between the two revisions: "
+                f"`git diff {a[:10]} {b[:10]} -- src configs` is empty."
+            )
+        elif code == 1:
+            names = subprocess.run(
+                ["git", "diff", "--name-only", a, b, "--", "src", "configs"],
+                capture_output=True,
+                text=True,
+            ).stdout.split()
+            lines.append(
+                "The committed training code DIFFERS between the two revisions: "
+                + ", ".join(names)
+            )
+        else:
+            lines.append(
+                "The committed-code comparison is unverifiable in this clone: one or "
+                "both revisions are not present (shallow or partial clone). Run "
+                f"`git diff {a[:10]} {b[:10]} -- src configs` in a full clone."
+            )
+    for name in dirty_runs:
+        lines.append(
+            f"{name} was run from a modified worktree; the modification was not "
+            "captured and cannot be recovered. Any comparison involving it is the "
+            "configured difference plus an unquantified uncommitted delta."
+        )
+    return lines
+
+
 def run() -> str:
     runs = json.loads(PROBE.read_text())["runs"]
 
-    lines: list[str] = []
+    lines: list[str] = [
+        "Selection disagreement (metric-only). Epochs are selected by post-hoc",
+        "replay over each run's recorded history; a selection here may or may not",
+        "have loadable weights -- that is the second table's question.",
+        "",
+    ]
     for name, entry in sorted(runs.items(), key=_sort_key):
         lines.extend(_format_run(name, entry))
         lines.append("")
+    lines.extend(_deployable(runs))
+    lines.append("")
+    lines.extend(_provenance(runs))
+    lines.append("")
 
     substantial = [
         r["gap_between_error_and_f1"]["f1_ratio"]

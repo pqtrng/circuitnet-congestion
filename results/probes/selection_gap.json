@@ -5,6 +5,12 @@
       "superseded": true,
       "loss": "masked_mse",
       "baseline_val_zero_predictor_mse": 1.29870199355839e-05,
+      "git": {
+        "revision": "ae0a476eda79057e594dc16a33f70d0fd715d64f",
+        "dirty": false
+      },
+      "checkpoints_recorded": 2,
+      "checkpoints_surviving": 0,
       "selections": {
         "val_mse": {
           "epoch": 5,
@@ -15,7 +21,15 @@
           "val_precision": 0.1588785046728972,
           "val_prediction_max": 0.06462369859218597,
           "train_objective": 2.5784423907495145e-05,
-          "val_mse_over_baseline": 0.9483667459226387
+          "val_mse_over_baseline": 0.9483667459226387,
+          "checkpoint_files": [
+            {
+              "file": "best_val_mse.pt",
+              "sha256": "00e2e51852f29a6b11777979d355c5b985ff75694280cf7b32fa22f254e615a0",
+              "exists": false
+            }
+          ],
+          "deployable": false
         },
         "val_weighted_mse": {
           "epoch": 13,
@@ -26,7 +40,9 @@
           "val_precision": 0.11981956583027911,
           "val_prediction_max": 0.11630633473396301,
           "train_objective": 2.1964777662438492e-05,
-          "val_mse_over_baseline": 1.0012835474617598
+          "val_mse_over_baseline": 1.0012835474617598,
+          "checkpoint_files": [],
+          "deployable": false
         },
         "val_f1": {
           "epoch": 44,
@@ -37,7 +53,9 @@
           "val_precision": 0.09252669039145907,
           "val_prediction_max": 0.6648338437080383,
           "train_objective": 1.7595907498532945e-05,
-          "val_mse_over_baseline": 1.0306417515679491
+          "val_mse_over_baseline": 1.0306417515679491,
+          "checkpoint_files": [],
+          "deployable": false
         },
         "final_epoch": {
           "epoch": 60,
@@ -48,7 +66,15 @@
           "val_precision": 0.10297316896301668,
           "val_prediction_max": 0.4719666540622711,
           "train_objective": 1.6286693207743018e-05,
-          "val_mse_over_baseline": 0.9977708082657251
+          "val_mse_over_baseline": 0.9977708082657251,
+          "checkpoint_files": [
+            {
+              "file": "last.pt",
+              "sha256": "a1cd083ad07e80a115d1ddf2676a8562532e4269c27ab26cd507fd6a5d86d402",
+              "exists": false
+            }
+          ],
+          "deployable": false
         }
       },
       "gap_between_error_and_f1": {
@@ -63,6 +89,12 @@
       "superseded": true,
       "loss": "masked_mse",
       "baseline_val_zero_predictor_mse": 1.29870199355839e-05,
+      "git": {
+        "revision": "7dd204e0319226053a7f7f7f6839113ad23aaacd",
+        "dirty": false
+      },
+      "checkpoints_recorded": 2,
+      "checkpoints_surviving": 0,
       "selections": {
         "val_mse": {
           "epoch": 6,
@@ -73,7 +105,15 @@
           "val_precision": 0.0,
           "val_prediction_max": 0.04613851010799408,
           "train_objective": 2.5667500655945416e-05,
-          "val_mse_over_baseline": 0.947227869041317
+          "val_mse_over_baseline": 0.947227869041317,
+          "checkpoint_files": [
+            {
+              "file": "best_val_mse.pt",
+              "sha256": "259ab2b67c05ebec77dc97e686b8814e1f0a96756b9e207e1c74e9dcea84cf97",
+              "exists": false
+            }
+          ],
+          "deployable": false
         },
         "val_weighted_mse": {
           "epoch": 11,
@@ -84,7 +124,9 @@
           "val_precision": 0.13756345177664975,
           "val_prediction_max": 0.08737748116254807,
           "train_objective": 2.3725268552517213e-05,
-          "val_mse_over_baseline": 0.9795903503167307
+          "val_mse_over_baseline": 0.9795903503167307,
+          "checkpoint_files": [],
+          "deployable": false
         },
         "val_f1": {
           "epoch": 16,
@@ -95,7 +137,9 @@
           "val_precision": 0.112797807294961,
           "val_prediction_max": 0.10741337388753891,
           "train_objective": 2.32766809575644e-05,
-          "val_mse_over_baseline": 0.9935225171977704
+          "val_mse_over_baseline": 0.9935225171977704,
+          "checkpoint_files": [],
+          "deployable": false
         },
         "final_epoch": {
           "epoch": 18,
@@ -106,7 +150,15 @@
           "val_precision": 0.1480086114101184,
           "val_prediction_max": 0.09279117733240128,
           "train_objective": 2.1805064127089837e-05,
-          "val_mse_over_baseline": 0.9595881273384589
+          "val_mse_over_baseline": 0.9595881273384589,
+          "checkpoint_files": [
+            {
+              "file": "last.pt",
+              "sha256": "24c8c2a0756e653f3e99889d0b3869b080fceaa81503b78e0a3f5a7e0c85b9d1",
+              "exists": false
+            }
+          ],
+          "deployable": false
         }
       },
       "gap_between_error_and_f1": {
@@ -121,6 +173,12 @@
       "superseded": true,
       "loss": "masked_weighted_mse",
       "baseline_val_zero_predictor_mse": 1.29870199355839e-05,
+      "git": {
+        "revision": "7dd204e0319226053a7f7f7f6839113ad23aaacd",
+        "dirty": true
+      },
+      "checkpoints_recorded": 3,
+      "checkpoints_surviving": 0,
       "selections": {
         "val_mse": {
           "epoch": 8,
@@ -131,7 +189,15 @@
           "val_precision": 0.0548224945020421,
           "val_prediction_max": 0.24008256196975708,
           "train_objective": 0.00013262351648617366,
-          "val_mse_over_baseline": 1.1795027685976445
+          "val_mse_over_baseline": 1.1795027685976445,
+          "checkpoint_files": [
+            {
+              "file": "best_val_mse.pt",
+              "sha256": "db412c7dd069a3fd6a42bfba631c8f36b285cd52ed154cf2cc00590583a3d316",
+              "exists": false
+            }
+          ],
+          "deployable": false
         },
         "val_weighted_mse": {
           "epoch": 7,
@@ -142,7 +208,15 @@
           "val_precision": 0.07322236822893853,
           "val_prediction_max": 0.11819985508918762,
           "train_objective": 0.00014042096669687244,
-          "val_mse_over_baseline": 1.2001091845689746
+          "val_mse_over_baseline": 1.2001091845689746,
+          "checkpoint_files": [
+            {
+              "file": "best_val_objective.pt",
+              "sha256": "91157daa4eaa733133a7764e8c10a0ea37f0a30b4f32bb809645cbaa0e8b3e49",
+              "exists": false
+            }
+          ],
+          "deployable": false
         },
         "val_f1": {
           "epoch": 16,
@@ -153,7 +227,9 @@
           "val_precision": 0.05519031141868512,
           "val_prediction_max": 0.5791724324226379,
           "train_objective": 0.0001127806886657808,
-          "val_mse_over_baseline": 1.3912082493234437
+          "val_mse_over_baseline": 1.3912082493234437,
+          "checkpoint_files": [],
+          "deployable": false
         },
         "final_epoch": {
           "epoch": 20,
@@ -164,7 +240,15 @@
           "val_precision": 0.05985748218527316,
           "val_prediction_max": 0.7316067814826965,
           "train_objective": 0.00010594582178899408,
-          "val_mse_over_baseline": 1.2682331446462713
+          "val_mse_over_baseline": 1.2682331446462713,
+          "checkpoint_files": [
+            {
+              "file": "last.pt",
+              "sha256": "292d168f1886711080d9bbb1152adc6b9ac07efe00dd59cd490fbc8e9f64bfea",
+              "exists": false
+            }
+          ],
+          "deployable": false
         }
       },
       "gap_between_error_and_f1": {
@@ -179,6 +263,12 @@
       "superseded": false,
       "loss": "masked_mse",
       "baseline_val_zero_predictor_mse": 1.29870199355839e-05,
+      "git": {
+        "revision": "0d1c53e012a6b851ac3dbda7876593dd811aa7bf",
+        "dirty": false
+      },
+      "checkpoints_recorded": 15,
+      "checkpoints_surviving": 15,
       "selections": {
         "val_mse": {
           "epoch": 5,
@@ -189,7 +279,20 @@
           "val_precision": 0.215962441314554,
           "val_prediction_max": 0.06849312782287598,
           "train_objective": 2.523971334773089e-05,
-          "val_mse_over_baseline": 0.9490285710514589
+          "val_mse_over_baseline": 0.9490285710514589,
+          "checkpoint_files": [
+            {
+              "file": "best_val_mse.pt",
+              "sha256": "2c053a190fda792b2441498fab4c0f0404eaf5e7d51e21c27080adfaeccba99b",
+              "exists": true
+            },
+            {
+              "file": "epoch_005.pt",
+              "sha256": "4c3fb665d72fc1b9bd39c8dd626e7e6435385dc5c22177d6ea79850c311d4b45",
+              "exists": true
+            }
+          ],
+          "deployable": true
         },
         "val_weighted_mse": {
           "epoch": 18,
@@ -200,7 +303,9 @@
           "val_precision": 0.12262071729112402,
           "val_prediction_max": 0.11152821779251099,
           "train_objective": 2.1417138565126822e-05,
-          "val_mse_over_baseline": 0.9917952693390307
+          "val_mse_over_baseline": 0.9917952693390307,
+          "checkpoint_files": [],
+          "deployable": false
         },
         "val_f1": {
           "epoch": 41,
@@ -211,7 +316,15 @@
           "val_precision": 0.10970996216897856,
           "val_prediction_max": 0.14945121109485626,
           "train_objective": 1.9599488146934848e-05,
-          "val_mse_over_baseline": 1.0007491267138506
+          "val_mse_over_baseline": 1.0007491267138506,
+          "checkpoint_files": [
+            {
+              "file": "best_val_f1.pt",
+              "sha256": "9e36d3c4cfa27ebd44fa3951692b1cb8995923d7b773e1b3fd1fbcfe04f97a69",
+              "exists": true
+            }
+          ],
+          "deployable": true
         },
         "final_epoch": {
           "epoch": 60,
@@ -222,7 +335,20 @@
           "val_precision": 0.11767327835970581,
           "val_prediction_max": 0.12739785015583038,
           "train_objective": 1.843573378887018e-05,
-          "val_mse_over_baseline": 0.9834644015256991
+          "val_mse_over_baseline": 0.9834644015256991,
+          "checkpoint_files": [
+            {
+              "file": "epoch_060.pt",
+              "sha256": "7205fc9b0c7b493b0eac9b3b074bbc05fb0a3d1fc9976002a86cb79228345495",
+              "exists": true
+            },
+            {
+              "file": "last.pt",
+              "sha256": "58d63f42760791027f38731dd9b617ef90b7b41c5ff345a8722471b5277785f7",
+              "exists": true
+            }
+          ],
+          "deployable": true
         }
       },
       "gap_between_error_and_f1": {
@@ -237,6 +363,12 @@
       "superseded": false,
       "loss": "masked_weighted_mse",
       "baseline_val_zero_predictor_mse": 1.29870199355839e-05,
+      "git": {
+        "revision": "18ac550cb778877673b5be29ff8ae29a8ddbf516",
+        "dirty": true
+      },
+      "checkpoints_recorded": 16,
+      "checkpoints_surviving": 16,
       "selections": {
         "val_mse": {
           "epoch": 9,
@@ -247,7 +379,15 @@
           "val_precision": 0.06667473866892683,
           "val_prediction_max": 0.1556355208158493,
           "train_objective": 0.00013289764240933884,
-          "val_mse_over_baseline": 1.186769416341026
+          "val_mse_over_baseline": 1.186769416341026,
+          "checkpoint_files": [
+            {
+              "file": "best_val_mse.pt",
+              "sha256": "dd73ff359ff4ff2973f6a4186b9af4791e8d2a9ea525df4a030a510bdca82d9b",
+              "exists": true
+            }
+          ],
+          "deployable": true
         },
         "val_weighted_mse": {
           "epoch": 5,
@@ -258,7 +398,20 @@
           "val_precision": 0.07804353668368719,
           "val_prediction_max": 0.10082761943340302,
           "train_objective": 0.00016041189054957048,
-          "val_mse_over_baseline": 1.1905196197748622
+          "val_mse_over_baseline": 1.1905196197748622,
+          "checkpoint_files": [
+            {
+              "file": "best_val_objective.pt",
+              "sha256": "8262a86463fcb8f6f19328884c574931697fac829d6ed4547992c20b7dfc2ce6",
+              "exists": true
+            },
+            {
+              "file": "epoch_005.pt",
+              "sha256": "9a5da228ebeaedd68f24e5e50af55f1d87af6e70ede762daae4ec600fee66acd",
+              "exists": true
+            }
+          ],
+          "deployable": true
         },
         "val_f1": {
           "epoch": 7,
@@ -269,7 +422,15 @@
           "val_precision": 0.07268442139995286,
           "val_prediction_max": 0.13791674375534058,
           "train_objective": 0.00013962633155200702,
-          "val_mse_over_baseline": 1.295665646277682
+          "val_mse_over_baseline": 1.295665646277682,
+          "checkpoint_files": [
+            {
+              "file": "best_val_f1.pt",
+              "sha256": "128f4350edea1e167e6d68731e8b60a3515637cd8cd4c06aafea67d199521822",
+              "exists": true
+            }
+          ],
+          "deployable": true
         },
         "final_epoch": {
           "epoch": 60,
@@ -280,7 +441,20 @@
           "val_precision": 0.05582726947393535,
           "val_prediction_max": 0.9112290740013123,
           "train_objective": 7.864709876371308e-05,
-          "val_mse_over_baseline": 1.31209301826843
+          "val_mse_over_baseline": 1.31209301826843,
+          "checkpoint_files": [
+            {
+              "file": "epoch_060.pt",
+              "sha256": "fb030e630c5a2914ad0e5ed293f35886beac6d82024cb9ead12b570552ce7458",
+              "exists": true
+            },
+            {
+              "file": "last.pt",
+              "sha256": "383f9c6533c42e07e682c5e21d9c7e31256097b1596f975de15f78df8ee9ae67",
+              "exists": true
+            }
+          ],
+          "deployable": true
         }
       },
       "gap_between_error_and_f1": {

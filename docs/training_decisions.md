@@ -375,54 +375,91 @@ checkpoints are also written on a fixed interval. Reporting a single rule would
 report a choice rather than a result.
 
 ```
+Selection disagreement (metric-only). Epochs are selected by post-hoc
+replay over each run's recorded history; a selection here may or may not
+have loadable weights -- that is the second table's question.
+
 unet_a
   loss=masked_mse  epochs=60  zero-predictor baseline=1.2987e-05
-  selected by              epoch  error/baseline       F1   recall
-  lowest error                 5          0.9490   0.0022   0.0011
-  lowest weighted error       18          0.9918   0.0267   0.0150
-  highest hotspot F1          41          1.0007   0.0356   0.0213
-  final epoch                 60          0.9835   0.0233   0.0129
+  selected by              epoch  error/baseline       F1   recall  weights  
+  lowest error                 5          0.9490   0.0022   0.0011  2 file(s)
+  lowest weighted error       18          0.9918   0.0267   0.0150  none     
+  highest hotspot F1          41          1.0007   0.0356   0.0213  1 file(s)
+  final epoch                 60          0.9835   0.0233   0.0129  2 file(s)
   -> the F1 rule's choice scores 15.9x higher on F1, 36 epochs later
   -> that choice is rated worse than predicting zero everywhere by the pixel metric
 
 unet_b
   loss=masked_weighted_mse  epochs=60  zero-predictor baseline=1.2987e-05
-  selected by              epoch  error/baseline       F1   recall
-  lowest error                 9          1.1868   0.0503   0.0404
-  lowest weighted error        5          1.1905   0.0488   0.0355
-  highest hotspot F1           7          1.2957   0.0740   0.0754
-  final epoch                 60          1.3121   0.0658   0.0801
+  selected by              epoch  error/baseline       F1   recall  weights  
+  lowest error                 9          1.1868   0.0503   0.0404  1 file(s)
+  lowest weighted error        5          1.1905   0.0488   0.0355  2 file(s)
+  highest hotspot F1           7          1.2957   0.0740   0.0754  1 file(s)
+  final epoch                 60          1.3121   0.0658   0.0801  2 file(s)
   -> the F1 rule's choice scores 1.5x higher on F1, 2 epochs earlier
   -> that choice is rated worse than predicting zero everywhere by the pixel metric
 
 superseded/unet_a_no_f1_checkpoint  [superseded]
   loss=masked_mse  epochs=60  zero-predictor baseline=1.2987e-05
-  selected by              epoch  error/baseline       F1   recall
-  lowest error                 5          0.9484   0.0008   0.0004
-  lowest weighted error       13          1.0013   0.0191   0.0104
-  highest hotspot F1          44          1.0306   0.0367   0.0229
-  final epoch                 60          0.9978   0.0297   0.0174
+  selected by              epoch  error/baseline       F1   recall  weights  
+  lowest error                 5          0.9484   0.0008   0.0004  gone     
+  lowest weighted error       13          1.0013   0.0191   0.0104  none     
+  highest hotspot F1          44          1.0306   0.0367   0.0229  none     
+  final epoch                 60          0.9978   0.0297   0.0174  gone     
   -> the F1 rule's choice scores 44.3x higher on F1, 39 epochs later
   -> that choice is rated worse than predicting zero everywhere by the pixel metric
 
 superseded/unet_a_patience12  [superseded]
   loss=masked_mse  epochs=18  zero-predictor baseline=1.2987e-05
-  selected by              epoch  error/baseline       F1   recall
-  lowest error                 6          0.9472   0.0000   0.0000
-  lowest weighted error       11          0.9796   0.0126   0.0066
-  highest hotspot F1          16          0.9935   0.0235   0.0131
-  final epoch                 18          0.9596   0.0129   0.0067
+  selected by              epoch  error/baseline       F1   recall  weights  
+  lowest error                 6          0.9472   0.0000   0.0000  gone     
+  lowest weighted error       11          0.9796   0.0126   0.0066  none     
+  highest hotspot F1          16          0.9935   0.0235   0.0131  none     
+  final epoch                 18          0.9596   0.0129   0.0067  gone     
   -> the error rule selected a model with an F1 of exactly zero, 10 epochs before the F1 rule's choice
 
 superseded/unet_b_patience12  [superseded]
   loss=masked_weighted_mse  epochs=20  zero-predictor baseline=1.2987e-05
-  selected by              epoch  error/baseline       F1   recall
-  lowest error                 8          1.1795   0.0421   0.0341
-  lowest weighted error        7          1.2001   0.0588   0.0491
-  highest hotspot F1          16          1.3912   0.0694   0.0936
-  final epoch                 20          1.2682   0.0636   0.0678
+  selected by              epoch  error/baseline       F1   recall  weights  
+  lowest error                 8          1.1795   0.0421   0.0341  gone     
+  lowest weighted error        7          1.2001   0.0588   0.0491  gone     
+  highest hotspot F1          16          1.3912   0.0694   0.0936  none     
+  final epoch                 20          1.2682   0.0636   0.0678  gone     
   -> the F1 rule's choice scores 1.7x higher on F1, 8 epochs later
   -> that choice is rated worse than predicting zero everywhere by the pixel metric
+
+Deployable selections -- rows exist only where a checkpoint file covering
+the selected epoch still existed when the probe ran on the machine of
+record. Weights are excluded from the repository, so this is a recorded
+snapshot, not a property of this clone.
+
+  run                                selected by              epoch  file                   sha256        worktree
+  unet_a                             lowest error                 5  best_val_mse.pt        2c053a190fda  clean
+  unet_a                             lowest error                 5  epoch_005.pt           4c3fb665d72f  clean
+  unet_a                             highest hotspot F1          41  best_val_f1.pt         9e36d3c4cfa2  clean
+  unet_a                             final epoch                 60  epoch_060.pt           7205fc9b0c7b  clean
+  unet_a                             final epoch                 60  last.pt                58d63f427607  clean
+  unet_b                             lowest error                 9  best_val_mse.pt        dd73ff359ff4  dirty
+  unet_b                             lowest weighted error        5  best_val_objective.pt  8262a86463fc  dirty
+  unet_b                             lowest weighted error        5  epoch_005.pt           9a5da228ebea  dirty
+  unet_b                             highest hotspot F1           7  best_val_f1.pt         128f4350edea  dirty
+  unet_b                             final epoch                 60  epoch_060.pt           fb030e630c5a  dirty
+  unet_b                             final epoch                 60  last.pt                383f9c6533c4  dirty
+
+Across all runs 38 checkpoint digests are recorded and 31 files survived at probe time. The superseded runs retain 7 digests and 0 files: their disagreement survives in the metrics while the models behind it do not.
+
+best_val_objective.pt is matched to a selection by epoch alone. The
+quantity the loop tracked under that name is the run's own validation
+objective, which is not the replayed weighted-error metric, despite
+the similar name.
+
+Provenance of the canonical runs:
+
+  unet_a: revision 0d1c53e012, clean worktree
+  unet_b: revision 18ac550cb7, dirty worktree
+
+The committed training code is identical between the two revisions: `git diff 0d1c53e012 18ac550cb7 -- src configs` is empty.
+unet_b was run from a modified worktree; the modification was not captured and cannot be recovered. Any comparison involving it is the configured difference plus an unquantified uncommitted delta.
 
 Across 5 runs the two rules never select the same epoch.
 In the 4 run(s) long enough for the ratio to mean anything, the F1 rule's choice scores between 1.5x and 44.3x higher on F1.
