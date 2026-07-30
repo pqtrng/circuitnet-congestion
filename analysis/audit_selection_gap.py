@@ -66,10 +66,9 @@ def _format_run(name: str, run: dict[str, Any]) -> list[str]:
         )
     else:
         note = "" if run["epochs_recorded"] >= MINIMUM_EPOCHS_FOR_RATIO else " (short run)"
-        lines.append(
-            f"  -> the F1 rule's choice scores {ratio:.1f}x higher on F1, "
-            f"{apart} {plural} later{note}"
-        )
+        direction = "later" if apart > 0 else "earlier" if apart < 0 else "at the same epoch"
+        when = f"{abs(apart)} {plural} {direction}" if apart else "at the same epoch"
+        lines.append(f"  -> the F1 rule's choice scores {ratio:.1f}x higher on F1, {when}{note}")
 
     if gap["f1_choice_error_over_baseline"] and gap["f1_choice_error_over_baseline"] > 1.0:
         lines.append(

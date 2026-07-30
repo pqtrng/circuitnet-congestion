@@ -3,19 +3,26 @@
 Every constant in the default configuration was measured rather than guessed,
 and the ones that were not are labelled as such in the run record.
 
-Batch size 32 and four loader workers. Throughput is flat at roughly 4.9 ms per
-image from batch 16 through 48 and then degrades by a factor of seven at batch
-64, where peak allocation exceeds the accelerator's physical memory and the
-driver silently spills to host memory instead of raising. Batch 32 sits in the
-flat region with the largest remaining headroom. Loading costs about 8 ms per
-step against 158 ms of compute, so four workers are already nineteen times
-faster than they need to be.
+Batch size 32 and four loader workers, both measured by
+analysis.probe_throughput. Per-image time is flat near 4.9 ms across every
+batch size from 8 to 64 once autotuning is enabled, so a larger batch buys
+nothing; 32 is chosen for the memory headroom it leaves rather than for speed.
+An earlier measurement taken without autotuning did collapse at batch 64, with
+peak allocation above the device's physical memory and per-image time seven
+times worse, which is why the headroom is worth keeping. Loading costs 0.18 ms
+per image against 4.9 ms of compute at four workers, already far more than the
+loop can consume.
 
-Single precision. Half precision produced non-finite values on the first
-forward pass, buys no memory that is needed here, and runs at the same rate as
-single precision on accelerators without dedicated matrix units. Targets sit
-around 1e-2 and squared errors reach 1e-6, which is the bottom of half
-precision's dynamic range.
+Single precision, chosen on throughput rather than on stability. Under
+analysis.probe_precision half precision runs at 4.7 times the single-precision
+step time and uses 1.4 times the memory on this accelerator, which has no
+dedicated matrix units and gains nothing from the narrower format while
+autocast holds both copies of the weights. Earlier notes here claimed half
+precision produced non-finite values and that squared errors fell below its
+exponent floor. Neither reproduces: the largest activation the network produces
+is 5.3 against a ceiling of 65504, and no squared error over seven million
+valid pixels fell below the format's smallest normal. The speed argument stands
+on its own.
 
 Three selection rules are recorded per run rather than one, because a
 superseded run showed they disagree sharply. Selecting on validation error
