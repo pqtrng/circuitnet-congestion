@@ -1,32 +1,47 @@
-"""Render docs/data_decisions.md from a template plus live audit output.
+"""Render the decision documents from templates plus live audit output.
 
-Each <!--AUDIT:name--> marker is replaced by the fenced output of
-analysis.audit_<name>.run(). Numbers come from the pipeline manifests and are
-never hand-written, so re-running always reflects the current data.
+Each `<!--AUDIT:name-->` marker is replaced by the fenced output of
+`analysis.audit_<name>.run()`. The audit list is discovered from the markers
+themselves rather than maintained separately, so adding a section to a template
+is enough.
+
+Numbers come from committed manifests and probe records and are never written by
+hand, so re-rendering always reflects the current evidence. Audits read only
+committed JSON, which means this runs on a fresh clone with no data layer and no
+accelerator.
 """
 
 from __future__ import annotations
 
 import importlib
+import re
 from datetime import date
 from pathlib import Path
 
-TMPL = Path("docs/data_decisions.md.tmpl")
-OUT = Path("docs/data_decisions.md")
-AUDITS = ["provenance", "dedup", "sparsity", "shapes", "patches"]
+DOCS = Path("docs")
+MARKER = re.compile(r"<!--AUDIT:(\w+)-->")
 
 
-def render() -> str:
-    text = TMPL.read_text()
-    for name in AUDITS:
-        mod = importlib.import_module(f"analysis.audit_{name}")
-        text = text.replace(f"<!--AUDIT:{name}-->", f"```\n{mod.run()}\n```")
+def render(template_path: Path) -> str:
+    text = template_path.read_text()
+
+    for name in MARKER.findall(text):
+        module = importlib.import_module(f"analysis.audit_{name}")
+        text = text.replace(f"<!--AUDIT:{name}-->", f"```\n{module.run()}\n```")
+
     return text.replace("<!--DATE-->", date.today().isoformat())
 
 
 def main() -> None:
-    OUT.write_text(render())
-    print(f"Wrote {OUT}")
+    templates = sorted(DOCS.glob("*.md.tmpl"))
+    if not templates:
+        raise SystemExit(f"no templates found under {DOCS}")
+
+    for template_path in templates:
+        output_path = template_path.with_suffix("")
+        output_path.write_text(render(template_path))
+        sections = len(MARKER.findall(template_path.read_text()))
+        print(f"wrote {output_path}  ({sections} audit sections)")
 
 
 if __name__ == "__main__":

@@ -1,4 +1,4 @@
-.PHONY: setup fmt lint test check clean ci-status ci-watch acquire bronze silver gold report train board
+.PHONY: setup fmt lint test check clean ci-status ci-watch acquire bronze silver gold report train board probe
 
 CONFIG ?= configs/unet_a.yaml
 
@@ -52,3 +52,10 @@ train:
 
 board:
 	uv run tensorboard --logdir runs --port 6006 --bind_all
+
+probe:
+	uv run python -m analysis.probe_target_stats
+	uv run python -m analysis.probe_selection_gap
+	uv run python -m analysis.probe_throughput
+	uv run python -m analysis.probe_precision
+	uv run python -m analysis.probe_optimisation

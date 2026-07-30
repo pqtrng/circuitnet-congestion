@@ -1,0 +1,197 @@
+# Training Decisions — CircuitNet-N14 Congestion Baseline
+
+_Generated <!--DATE--> by `make report`. Every number below is produced by a probe
+under `analysis/`, not written by hand._
+
+_The probes require the Gold layer and exclusive use of an accelerator, so they
+are not part of continuous integration and are run manually via `make probe`.
+Their output is committed as JSON under `results/probes/`, and the audits that
+render this document read only that JSON — this file regenerates on a machine
+with neither the data nor an accelerator._
+
+This document records the decisions taken between a training-ready Gold layer and
+a trained baseline. It is a companion to `data_decisions.md` and follows the same
+rule: a decision is only recorded here if a measurement supports it.
+
+Three of the entries below reverse a conclusion this project had already reached
+and, in two cases, already committed. Those reversals are kept in place rather
+than tidied away. A repository whose contribution is evaluation honesty cannot
+present its reasoning as having been correct from the start.
+
+## 1. What the target actually is
+
+The prediction target is global-routing overflow divided by track capacity. That
+makes it a ratio with a small integer numerator and a per-design, per-layer
+denominator, so it is not continuous: it lands on a grid of fractions dominated
+by a single value.
+
+Three consequences follow, and each one changes a decision made later in this
+document. Absolute error cannot be compared across splits, because the error of
+predicting zero everywhere differs between them by an order of magnitude. The
+hotspot threshold cannot be placed in a gap between quantisation levels, because
+at the relevant scale there is no gap; it is defined physically instead, as
+demand exceeding capacity by more than five percent, and the level sitting
+exactly at five percent is excluded by a strict comparison. And the concentration
+of squared error in the extreme tail is a property of the training split rather
+than of the task, which is what rules out a magnitude-proportional loss weight
+later.
+
+<!--AUDIT:target_stats-->
+
+## 2. Loss — masked reduction and a binary class weight
+
+Patch coverage ranges from under two percent to a full window, because edge
+patches are zero-padded to a fixed size. Reducing the loss as a mean of per-patch
+means would let a pixel in a small edge fragment count up to sixty-four times a
+pixel in a full patch. The reduction is therefore a single global masked mean
+over every valid pixel in the batch. Edge fragments are kept rather than
+filtered: the die boundary is where macros and IO sit, so discarding it would
+discard the hard cases.
+
+Two objectives are trained and compared. The failure mode of plain squared error
+on this target is not that it ignores rare high values — the measurement in
+section 1 shows squaring already amplifies them heavily. The failure is
+shrinkage: where the model cannot distinguish pixels, the minimiser is the
+conditional mean, which for a pixel that is a hotspot with probability 0.3 and
+value 0.07 sits below any usable threshold. The model then predicts a smooth
+low-amplitude field that scores well per pixel while crossing no threshold
+anywhere.
+
+The weighted variant therefore applies a binary class weight rather than one
+proportional to the target, and its default solves the same conditional optimum
+for the weight at which it clears the threshold. That derivation is checked
+against the optimiser in `tests/test_losses.py` rather than asserted here.
+
+## 3. Batch size and loader workers
+
+Per-image time is flat across the entire batch range this accelerator can hold,
+so no batch size in that range is faster than another. The choice is made on
+memory headroom instead, and for a specific reason: on this platform, exceeding
+device memory does not raise. The driver falls back to host memory and the run
+becomes several times slower with nothing in the logs to say so.
+
+That failure was observed directly before autotuning was enabled, and it does not
+reproduce with autotuning on, which selects a more frugal convolution algorithm
+under pressure. Both measurements describe their own configuration correctly. The
+conservative batch size is kept because the failure it avoids is silent, not
+because the faster option is slower.
+
+Loading is not the constraint and never was. An early estimate treated this task
+as input-bound because compute and loading were timed together; separating them
+shows loading running an order of magnitude faster than the loop can consume.
+
+<!--AUDIT:throughput-->
+
+## 4. Numerical precision
+
+Training runs in single precision, and the reason recorded here is not the reason
+originally given.
+
+Two earlier claims — that half precision produced non-finite values on the first
+forward pass, and that squared errors reached the bottom of its dynamic range —
+do not reproduce. Both were true when they were made: the output head was not yet
+zero-initialised, predictions ran two orders of magnitude above any target, and
+the resulting errors genuinely did overflow. Fixing the initialisation removed
+the numerical problem and left the conclusion without a justification.
+
+The justification that survives is throughput. This accelerator has no dedicated
+matrix units, so a narrower format buys no arithmetic and the cast is pure
+overhead. Bfloat16 is measured alongside as a control rather than a candidate: it
+carries single precision's exponent range with fewer mantissa bits, so a failure
+of range would separate the two formats. It does not.
+
+<!--AUDIT:precision-->
+
+## 5. Learning rate, and fixing the instrument first
+
+This section exists in its current form because the probe behind it was wrong
+three times.
+
+Three invocations of the same learning-rate sweep disagreed with each other by
+more than the learning rates disagreed among themselves. Under autotuned kernel
+selection, a fixed seed does not produce a fixed result, and the variation was
+large enough to flip a verdict between "fitted" and "collapsed" rather than to
+move the last digits. Every conclusion drawn from those runs was noise, including
+one already written into a commit message.
+
+The probe now disables autotuning, enforces deterministic kernels, and verifies
+that choice by repeating a configuration and comparing losses bit for bit before
+it sweeps. That costs roughly three and a half times the runtime, which is the
+right trade for something whose only job is to measure. The training entry point
+deliberately does the opposite: it keeps autotuning for the throughput and
+records in every run that its results are reproducible in distribution rather
+than bitwise.
+
+With the instrument fixed, spread across seeds means sensitivity to
+initialisation rather than platform noise — and the ranking of the candidate
+rates reverses.
+
+<!--AUDIT:optimisation-->
+
+## 6. Checkpoint selection — where the pixel metric does real damage
+
+Sections 1 through 5 concern configuration. This one concerns the central claim
+of the project, and it is the strongest evidence in it.
+
+A training run produces one trajectory and several defensible ways to pick a
+model from it. Across every run recorded here, no two rules pick the same epoch,
+and the gap between them is not marginal. Selecting on validation error
+repeatedly chooses a model that detects almost nothing, while a model appearing
+tens of epochs later in the same run detects an order of magnitude more. In one
+run the error rule chose a model whose hotspot F1 was exactly zero while a model
+in the same trajectory detected hotspots.
+
+More pointedly: the best detector in a run is frequently one that the pixel
+metric rates as worse than predicting zero everywhere. Nothing in a loss curve
+indicates that this is happening. The curve descends smoothly throughout.
+
+This is why three selection rules are recorded per run instead of one, and why
+checkpoints are also written on a fixed interval. Reporting a single rule would
+report a choice rather than a result.
+
+<!--AUDIT:selection_gap-->
+
+## 7. Stopping rule
+
+Early stopping was removed after it was observed selecting on noise. Validation
+error fluctuates around a flat level from the first epoch while the training
+objective is still descending, so a patience counter measures the fluctuation and
+halts at an arbitrary point. In the superseded runs it chose a noise minimum for
+the plain objective and cut the weighted run short while its hotspot recall was
+still climbing.
+
+No validation metric available at this scale gives a usable stopping signal, so
+the runs use a fixed epoch budget and record the whole trajectory. That budget is
+a time constraint, not a convergence criterion, and each run record says so.
+
+## Process
+
+The baseline was trained three times. Each retraining was caused by a measurement
+that contradicted a standing assumption: early stopping selecting on noise, then
+a selection rule that only became interesting after the run had finished and for
+which no checkpoint existed. The runs that were replaced are kept under
+`results/superseded/` with their full trajectories, because the argument in
+section 6 rests on them.
+
+Model weights are excluded from the repository. Every run record therefore stores
+a SHA-256 per checkpoint, the git revision, and whether the worktree was clean —
+without those, a reported number has no link to the model that produced it.
+
+## Limitations
+
+- Every result here comes from a single seed per configuration. No claim is made
+  about variance across seeds, and the selection gap in section 6 has not been
+  measured against seed variation.
+- Checkpoints are selected on the validation split, which is the sparsest of the
+  three by a wide margin. Model selection therefore happens on a distribution
+  unlike the one the model is finally scored against. This is not corrected for.
+- The learning-rate sweep fits thirty-two patches full-batch. Mini-batch noise
+  over the full training split is a different optimisation problem, so a rate
+  that is stable on the subset is not thereby stable on the whole.
+- Three seeds bound sensitivity to initialisation loosely. A rate that passes the
+  stability check can still fail on a fourth seed.
+- Throughput and memory figures describe one accelerator. The silent spill in
+  section 3 is a property of this platform's driver behaviour and may not
+  transfer.
+- The epoch budget was chosen to fit two runs in one session. Neither run had
+  converged when it stopped; the training objective was still descending.
