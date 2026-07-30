@@ -46,8 +46,6 @@ analysis/probe_throughput.py::can therefore be several times slower than one cho
 analysis/probe_throughput.py::collapsing by several times. A configuration chosen from a memory figure alone
 analysis/probe_throughput.py::half times slower than the truth, and slowed that training run by 30% in the
 analysis/probe_throughput.py::held by another process: an earlier version of this probe read 84% of the
-configs/unet_b.yaml::# between the quantisation levels 2/44 and 3/44.
-configs/unet_b.yaml::# probability 0.3 and value 0.07, the point at which the conditional-mean
 docs/data_decisions.md.tmpl::1640 px. Resizing everything to a fixed square would cause two problems. First,
 docs/data_decisions.md.tmpl::small CPU designs are roughly 250 px across while the largest design approaches
 docs/data_decisions.md.tmpl::the smallest chips (256 would pad roughly three quarters of them) and yields a

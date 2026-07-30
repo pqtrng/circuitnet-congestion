@@ -1,10 +1,14 @@
 # Variant B: masked squared error with a binary class weight on hotspot pixels.
 #
-# The weight is binary rather than proportional to the target. positive_weight
-# solves w*p*y/(w*p+1-p) > threshold for a pixel that is a hotspot with
-# probability 0.3 and value 0.07, the point at which the conditional-mean
-# optimum clears the threshold instead of sitting below it. threshold lies
-# between the quantisation levels 2/44 and 3/44.
+# The weight is binary rather than proportional to the target; the derivation
+# is in the losses module docstring. The closed form there yields a lower
+# bound on positive_weight under stated illustrative assumptions; the
+# configured value sits above that bound with margin, and the margin is a
+# choice, not a derived optimum. The threshold coincides exactly with one of
+# the target quantisation levels -- pixels sit directly on it, counted under
+# splits.train.pixels_on_threshold in results/probes/target_stats.json -- so
+# strict-versus-inclusive comparison at this threshold is a real decision,
+# not a formality.
 run_name: unet_b
 seed: 42
 
