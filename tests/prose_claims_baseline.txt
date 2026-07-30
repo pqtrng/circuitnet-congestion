@@ -69,16 +69,6 @@ src/circuitnet_congestion/models/unet.py::range is not the reason: the largest a
 src/circuitnet_congestion/models/unet.py::roughly 1.5% of valid pixels are non-zero. Pooling destroys exactly that band.
 src/circuitnet_congestion/models/unet.py::single-precision step time on this class of accelerator, and bfloat16 at 4.8:
 src/circuitnet_congestion/training/dataset.py::they are merged, neither the loss nor the evaluation can tell them apart. 42% of
-src/circuitnet_congestion/training/train.py::# worker startup and context initialisation, and is several times slower on any
-src/circuitnet_congestion/training/train.py::1.03 times the error of predicting zero everywhere. The model that detects
-src/circuitnet_congestion/training/train.py::analysis.probe_precision half precision runs at 4.7 times the single-precision
-src/circuitnet_congestion/training/train.py::analysis.probe_throughput. Per-image time is flat near 4.9 ms across every
-src/circuitnet_congestion/training/train.py::is 5.3 against a ceiling of 65504, and no squared error over seven million
-src/circuitnet_congestion/training/train.py::per image against 4.9 ms of compute at four workers, already far more than the
-src/circuitnet_congestion/training/train.py::picked epoch 5, whose hotspot F1 was 0.0008; selecting on F1 picked epoch 44,
-src/circuitnet_congestion/training/train.py::step time on this accelerator, and bfloat16 at 4.8, two formats of different
-src/circuitnet_congestion/training/train.py::times worse, which is why the headroom is worth keeping. Loading costs 0.18 ms
-src/circuitnet_congestion/training/train.py::whose F1 was 0.0367, forty-four times higher, and whose validation error was
 tests/test_losses.py::a meaningful gap. The level 1/20 is exactly five percent and the strict
 tests/test_losses.py::percent. Levels around 0.05 are dense -- between three hundred and six
 tests/test_losses.py::without it, given that ~98.5% of valid target pixels are zero.

@@ -1,45 +1,55 @@
 """Training entry point for the congestion U-Net baseline.
 
-Every constant in the default configuration was measured rather than guessed,
-and the ones that were not are labelled as such in the run record.
+Most constants in the default configuration follow from a measurement recorded
+under results/probes/. Where a value was chosen rather than measured, this
+docstring says which.
 
-Batch size 32 and four loader workers, both measured by
-analysis.probe_throughput. Per-image time is flat near 4.9 ms across every
-batch size from 8 to 64 once autotuning is enabled, so a larger batch buys
-nothing; 32 is chosen for the memory headroom it leaves rather than for speed.
-An earlier measurement taken without autotuning did collapse at batch 64, with
-peak allocation above the device's physical memory and per-image time seven
-times worse, which is why the headroom is worth keeping. Loading costs 0.18 ms
-per image against 4.9 ms of compute at four workers, already far more than the
-loop can consume.
+Batch size. Per-image time is flat across the swept batch sizes once autotuning
+is enabled, so a larger batch buys no speed: see summary.flat_region_ms_per_image
+and the compute sweep in results/probes/throughput.json. Batch 32 is chosen for
+the memory headroom it leaves, not for throughput -- the sweep's fastest entry is
+a different size. An earlier reading taken without autotuning showed a collapse
+at the largest batch; the decision document records that it does not reproduce,
+while the headroom it argued for is kept.
 
-Single precision, chosen on throughput rather than on stability. Under
-analysis.probe_precision half precision runs at 4.7 times the single-precision
-step time on this accelerator, and bfloat16 at 4.8, two formats of different
-mantissa width agreeing because the hardware has no dedicated matrix units and
-gains nothing from a narrower one. Peak allocation under the reduced formats is
-not usable evidence either way: autotuning scratch space varies with dtype
-enough to swamp the difference. Earlier notes here claimed half
-precision produced non-finite values and that squared errors fell below its
-exponent floor. Neither reproduces: the largest activation the network produces
-is 5.3 against a ceiling of 65504, and no squared error over seven million
-valid pixels fell below the format's smallest normal. The speed argument stands
-on its own.
+Loader workers. The loading sweep in the same artefact shows loading costs far
+less than compute at every worker count swept, so the loader is not the
+constraint and no setting among them is faster in a way the training loop can
+use. Four is a choice made inside that indifference, not a measured optimum: the
+sweep's own fastest entry is a higher count.
 
-Three selection rules are recorded per run rather than one, because a
-superseded run showed they disagree sharply. Selecting on validation error
-picked epoch 5, whose hotspot F1 was 0.0008; selecting on F1 picked epoch 44,
-whose F1 was 0.0367, forty-four times higher, and whose validation error was
-1.03 times the error of predicting zero everywhere. The model that detects
-hotspots best is one that squared error rates as worse than making no
-prediction at all. Reporting a single rule would therefore report a choice
-rather than a result.
+Single precision, chosen on throughput. Both reduced formats cost substantially
+more per step than single precision, by close to the same factor despite their
+different mantissa widths; the per-mode figures are in the modes list of
+results/probes/precision.json. Why the two agree is not established here. Peak
+allocation under those formats is not usable evidence either way, because
+autotuning scratch space varies with dtype enough to swamp the difference.
 
-Checkpoints are also written on a fixed interval. Three separate retraining
-cycles have been caused by a selection rule that was only recognised as
-interesting after the run finished. Periodic weights cost storage that is
-excluded from the repository anyway, and they let evaluation examine any rule
-without spending another training budget.
+Numerical range is not part of that argument, in either direction. An earlier
+note claimed half precision produced non-finite values and that squared errors
+fell below its exponent floor; neither reproduces. The correction that replaced
+it overreached in the other direction, citing an activation ceiling and an
+error-magnitude floor from a probe that never trains the model it measures. With
+the output head zero-initialised, the squared errors it examined are the squared
+targets and the activations are a property of initialisation, so neither reading
+describes training. Both are in results/probes/precision.json and both are real
+measurements of something else. The range question is open; the speed argument
+does not depend on it.
+
+Three selection rules are recorded per run rather than one, because the rules
+disagree. On a superseded run the error rule and the F1 rule chose epochs far
+apart, and the model the F1 rule preferred was rated by squared error as worse
+than predicting zero everywhere -- the per-run figures are in
+results/probes/selection_gap.json. That run's weights were not retained, so its
+disagreement survives in the logged metrics while the models behind it do not.
+Reporting a single rule would report a choice rather than a result.
+
+Checkpoints are also written on a fixed interval. The baseline has been
+retrained because a rule was recognised as interesting only after a run
+finished; the retrainings and their separate causes are listed in the decision
+document. Periodic weights cost storage that is excluded from the repository
+anyway, and they let evaluation examine any rule without spending another
+training budget.
 """
 
 from __future__ import annotations
@@ -74,12 +84,12 @@ from circuitnet_congestion.training.losses import (
 )
 from circuitnet_congestion.training.metrics import HotspotCounts, hotspot_counts, masked_max
 
-# Measured on the reference configuration; see the module docstring. The guard
-# exists because exceeding accelerator memory degrades throughput silently
-# rather than raising, which otherwise costs a full night to notice. It is
-# evaluated on the second epoch: the first pays for autotuned kernel selection,
-# worker startup and context initialisation, and is several times slower on any
-# healthy run.
+# Rounded down from summary.flat_region_ms_per_image in
+# results/probes/throughput.json. The guard exists because exceeding accelerator
+# memory degrades throughput silently rather than raising, which otherwise costs
+# a full night to notice. It is evaluated on the second epoch: the first pays for
+# autotuned kernel selection, worker startup and context initialisation, and is
+# slower than the epochs that follow on any healthy run.
 REFERENCE_MS_PER_IMAGE = 4.9
 THROUGHPUT_WARNING_MS_PER_IMAGE = 10.0
 
@@ -94,7 +104,7 @@ CHECKPOINT_LAST = "last.pt"
 RUN_RECORD = "run.json"
 HISTORY = "history.jsonl"
 
-BYTES_PER_GIB = 2**30
+BYTES_PER_GIB = 2 ** 30
 
 
 # --------------------------------------------------------------------------- #
@@ -335,12 +345,12 @@ def zero_predictor_baseline(loader: DataLoader, device: torch.device) -> float:
 
 @torch.inference_mode()
 def evaluate(
-    model: nn.Module,
-    loader: DataLoader,
-    device: torch.device,
-    *,
-    threshold: float,
-    positive_weight: float,
+        model: nn.Module,
+        loader: DataLoader,
+        device: torch.device,
+        *,
+        threshold: float,
+        positive_weight: float,
 ) -> EvalResult:
     model.eval()
     mse = MaskedMeanAccumulator()
@@ -374,11 +384,11 @@ def evaluate(
 
 
 def train_one_epoch(
-    model: nn.Module,
-    loader: DataLoader,
-    loss_fn: nn.Module,
-    optimizer: torch.optim.Optimizer,
-    device: torch.device,
+        model: nn.Module,
+        loader: DataLoader,
+        loss_fn: nn.Module,
+        optimizer: torch.optim.Optimizer,
+        device: torch.device,
 ) -> tuple[float, int]:
     """Run one epoch; return the epoch objective and the number of images seen."""
     model.train()
@@ -408,15 +418,15 @@ def train_one_epoch(
 
 
 def save_checkpoint(
-    path: Path,
-    *,
-    model: nn.Module,
-    optimizer: torch.optim.Optimizer,
-    epoch: int,
-    config: TrainConfig,
-    result: EvalResult,
-    selection: dict[str, float],
-    include_optimizer: bool = True,
+        path: Path,
+        *,
+        model: nn.Module,
+        optimizer: torch.optim.Optimizer,
+        epoch: int,
+        config: TrainConfig,
+        result: EvalResult,
+        selection: dict[str, float],
+        include_optimizer: bool = True,
 ) -> dict[str, Any]:
     path.parent.mkdir(parents=True, exist_ok=True)
     payload: dict[str, Any] = {
@@ -737,9 +747,9 @@ def main() -> None:
             )
 
         if (
-            not shrinkage_warned
-            and epoch >= SHRINKAGE_WARNING_EPOCH
-            and result.prediction_max < config.eval.hotspot_threshold
+                not shrinkage_warned
+                and epoch >= SHRINKAGE_WARNING_EPOCH
+                and result.prediction_max < config.eval.hotspot_threshold
         ):
             shrinkage_warned = True
             print(
