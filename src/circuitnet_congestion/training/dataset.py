@@ -13,8 +13,9 @@ that is allowed to look at the distribution of the data.
 
 The mask is returned as a separate tensor and is deliberately NOT applied to the
 ground truth. Padded pixels and genuinely uncongested pixels are both zero; once
-they are merged, neither the loss nor the evaluation can tell them apart. 42% of
-patches contain padding, so this distinction is load-bearing.
+they are merged, neither the loss nor the evaluation can tell them apart. A large
+share of patches contain padding (``n_padded_patches`` against ``n_patches`` in
+``data/gold/summary.json``), so this distinction is load-bearing.
 
 No augmentation is applied. Congestion maps live on physical die coordinates and
 the feature channels are anchored to that layout, so the rotation/flip family

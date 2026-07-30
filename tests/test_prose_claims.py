@@ -74,7 +74,9 @@ PHRASE = re.compile(
     r"(?:times|percent|per\s+cent|orders|hundred|thousand|million|faster|slower)\b",
     re.IGNORECASE,
 )
-ARTEFACT_REF = re.compile(r"results/probes/[A-Za-z0-9_]+\.json")
+ARTEFACT_REF = re.compile(
+    r"(?:results/probes|data/(?:gold|silver|provenance))/[A-Za-z0-9_.-]+\.json"
+)
 
 
 def _emit(text: str, rel_path: str, found: set[str]) -> None:

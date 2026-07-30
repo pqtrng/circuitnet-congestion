@@ -41,7 +41,6 @@ README.md::| train | 4 designs | 37,704 | 1.601% | 3.07e-05 |
 README.md::| val | Vortex-large | 6,641 | 0.955% | 1.30e-05 |
 README.md::| weighted | highest F1 | 7 | 1.296 | **0.0740** |
 README.md::| weighted | lowest error | 9 | 1.187 | 0.0503 |
-src/circuitnet_congestion/training/dataset.py::they are merged, neither the loss nor the evaluation can tell them apart. 42% of
 tests/test_losses.py::a meaningful gap. The level 1/20 is exactly five percent and the strict
 tests/test_losses.py::percent. Levels around 0.05 are dense -- between three hundred and six
 tests/test_losses.py::without it, given that ~98.5% of valid target pixels are zero.
