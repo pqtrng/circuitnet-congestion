@@ -494,6 +494,62 @@ def test_weighted_error_checkpoint_is_written_for_an_unweighted_run(
     assert "val_weighted_mse" in record["best"]
 
 
+def test_resume_records_a_second_session_without_rewriting_the_first(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """The record used to report a cumulative epoch count beside one session's
+    wall clock, with the start time overwritten by whichever process finished
+    last. Read together those three fields described a run that never happened.
+    Per-session facts now live in a list and the cumulative fields are derived
+    from it."""
+    gold = _write_gold(tmp_path)
+    config_path = _write_config(tmp_path, gold, epochs=1, name="sessions")
+    record_path = tmp_path / "results" / "sessions" / "run.json"
+
+    monkeypatch.setattr(sys, "argv", ["train", "--config", str(config_path)])
+    train_module.main()
+    first = json.loads(record_path.read_text())
+
+    monkeypatch.setattr(
+        sys, "argv", ["train", "--config", str(config_path), "--epochs", "3", "--resume"]
+    )
+    train_module.main()
+    second = json.loads(record_path.read_text())
+
+    assert len(first["sessions"]) == 1
+    assert len(second["sessions"]) == 2
+    assert second["started_utc"] == first["started_utc"]
+    assert second["sessions"][0] == first["sessions"][0]
+    assert second["sessions"][0]["resumed"] is False
+    assert second["sessions"][1]["resumed"] is True
+    assert second["sessions"][1]["first_epoch"] == 2
+    assert second["sessions"][1]["last_epoch"] == 3
+    assert second["training"]["epochs_run"] == 3
+    assert second["training"]["sessions_run"] == 2
+    assert second["training"]["wall_seconds"] == pytest.approx(
+        sum(s["wall_seconds"] for s in second["sessions"])
+    )
+
+
+def test_resume_restores_the_patience_counter(tmp_path: Path, monkeypatch) -> None:
+    """Patience is a counter the loop cannot recompute from weights. A resumed
+    run that restarts it at zero trains past the point an uninterrupted run
+    would have stopped, which makes early stopping depend on where the run was
+    interrupted."""
+    gold = _write_gold(tmp_path)
+    config_path = _write_config(tmp_path, gold, epochs=2, name="patience")
+    monkeypatch.setattr(sys, "argv", ["train", "--config", str(config_path)])
+    train_module.main()
+
+    state = torch.load(
+        tmp_path / "results" / "patience" / "checkpoints" / "last.pt",
+        map_location="cpu",
+        weights_only=False,
+    )
+
+    assert "epochs_without_improvement" in state["progress"]
+
+
 def test_crash_mid_loop_does_not_drop_prior_digests(tmp_path: Path, monkeypatch) -> None:
     """The clean-resume test above cannot see this failure: the record is
     rewritten before the epoch loop, and until the fix it was rewritten from a

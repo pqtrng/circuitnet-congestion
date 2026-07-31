@@ -432,6 +432,7 @@ def save_checkpoint(
         result: EvalResult,
         selection: dict[str, float],
         include_optimizer: bool = True,
+        progress: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     path.parent.mkdir(parents=True, exist_ok=True)
     payload: dict[str, Any] = {
@@ -441,6 +442,11 @@ def save_checkpoint(
         "metrics": result.as_record(),
         "selection": selection,
     }
+    if progress is not None:
+        # Counters the loop cannot recompute from weights. Without them a
+        # resumed run restarts its patience at zero and stops later than an
+        # uninterrupted run would have.
+        payload["progress"] = progress
     if include_optimizer:
         # Only the resume checkpoint carries optimiser moments. They are twice
         # the size of the weights and are never read when a checkpoint is
@@ -541,6 +547,9 @@ def main() -> None:
     best_f1 = -1.0
     last_path = checkpoint_dir / CHECKPOINT_LAST
     checkpoints: dict[str, dict[str, Any]] = {}
+    prior_sessions: list[dict[str, Any]] = []
+    first_started_utc: str | None = None
+    epochs_without_improvement = 0
 
     if args.resume:
         if not last_path.exists():
@@ -559,12 +568,21 @@ def main() -> None:
         )
         best_f1 = float(selection["val_f1"])
 
+        progress = state.get("progress") or {}
+        epochs_without_improvement = int(progress.get("epochs_without_improvement", 0))
+
         prior_record = results_dir / RUN_RECORD
         if prior_record.exists():
             # Digests written in earlier sessions describe files still on disk.
             # Dropping them would leave those weights unattributed, and the
             # digest is the only link between a reported number and its weights.
-            checkpoints = json.loads(prior_record.read_text()).get("checkpoints", {})
+            prior = json.loads(prior_record.read_text())
+            checkpoints = prior.get("checkpoints", {})
+            prior_sessions = prior.get("sessions", [])
+            # The first session's start time is a property of the run, not of
+            # this process. Overwriting it made a resumed run look shorter than
+            # it was and contradicted the wall-clock total in the same record.
+            first_started_utc = prior.get("started_utc")
         print(f"resumed from epoch {state['epoch']}")
     elif history_path.exists():
         history_path.unlink()
@@ -577,10 +595,22 @@ def main() -> None:
     print(f"zero-predictor validation error over the whole split: {baseline:.6e}")
 
     writer = SummaryWriter(Path(config.output.tensorboard_dir) / config.run_name)
+    session_started_utc = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
     record: dict[str, Any] = {
         "run_name": config.run_name,
         "smoke": smoke,
-        "started_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "started_utc": first_started_utc or session_started_utc,
+        # One entry per process that trained this run. Times, epoch spans and
+        # wall clock are per session; anything cumulative is derived from this
+        # list rather than measured by whichever process happened to finish.
+        "sessions": [
+            *prior_sessions,
+            {
+                "started_utc": session_started_utc,
+                "resumed": bool(args.resume),
+                "first_epoch": start_epoch,
+            },
+        ],
         "git": git_state(),
         "config": asdict(config),
         "environment": {
@@ -624,13 +654,18 @@ def main() -> None:
     }
     (results_dir / RUN_RECORD).write_text(json.dumps(record, indent=2) + "\n")
 
-    epochs_without_improvement = 0
     stopped_early = False
     shrinkage_warned = False
     started = time.perf_counter()
     last_epoch = start_epoch - 1
 
     for epoch in range(start_epoch, config.optim.epochs + 1):
+        # Shuffling is seeded per epoch, so epoch k draws the same order
+        # whether it runs in the first session or after a resume. A generator
+        # seeded once per process replays epoch one's order on every resume.
+        if train_loader.generator is not None:
+            train_loader.generator.manual_seed(config.seed + epoch)
+
         epoch_started = time.perf_counter()
         train_loss, images = train_one_epoch(model, train_loader, loss_fn, optimizer, device)
         train_seconds = time.perf_counter() - epoch_started
@@ -747,6 +782,7 @@ def main() -> None:
             config=config,
             result=result,
             selection=selection,
+            progress={"epochs_without_improvement": epochs_without_improvement},
         )
 
         print(
@@ -784,10 +820,23 @@ def main() -> None:
     writer.close()
 
     record["completed_utc"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    session = record["sessions"][-1]
+    session.update(
+        {
+            "ended_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            "last_epoch": last_epoch,
+            "wall_seconds": time.perf_counter() - started,
+        }
+    )
     record["training"] = {
+        # Cumulative over the run: the highest epoch reached, and the wall
+        # clock summed over every session. The previous record reported a
+        # cumulative epoch count beside a single session's wall clock, which
+        # read as a run that trained sixty epochs in one short sitting.
         "epochs_run": last_epoch,
         "stopped_early": stopped_early,
-        "wall_seconds": time.perf_counter() - started,
+        "sessions_run": len(record["sessions"]),
+        "wall_seconds": sum(s.get("wall_seconds", 0.0) for s in record["sessions"]),
     }
     record["best"] = {
         "val_mse": best_shared,
