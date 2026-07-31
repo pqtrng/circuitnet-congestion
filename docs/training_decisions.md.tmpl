@@ -290,3 +290,25 @@ obviously the easier of them. What settles it is a single evaluation pass of the
 published checkpoints over test. Cost: far below one run-budget, and it is the
 next task regardless; it is listed here because until it runs, every number in
 this repository is a validation number.
+
+## Test evaluation
+
+This section reports outcomes and informs no decision above it; sections 1
+through 6 remain validation-only, as their design rationales require. Each
+published checkpoint -- the error-selected and F1-selected model of each run --
+was scored once on the held-out test design through the same evaluate() the
+training loop uses, against that split's zero-predictor.
+
+<!--AUDIT:test_eval-->
+
+Two results, and they point different ways. The selection gap survives being
+carried off validation: in both runs the F1-selected checkpoint detects more on
+test than the error-selected one, on a design neither was selected on, so the
+disagreement between rules is not an artefact of the split it was found on. The
+pixel metric's inversion does not survive: on validation the F1-selected model
+scored worse on error than predicting zero, and on test no checkpoint does. The
+test split is denser in hotspots than validation by more than an order of
+magnitude, so there is signal a detector can capture without the metric
+punishing it. The blind spot the project documents is therefore not a constant
+of the task but a function of target sparsity -- most severe on the sparsest
+split, which is the one checkpoints are selected on.

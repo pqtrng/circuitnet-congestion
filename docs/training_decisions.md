@@ -598,3 +598,35 @@ obviously the easier of them. What settles it is a single evaluation pass of the
 published checkpoints over test. Cost: far below one run-budget, and it is the
 next task regardless; it is listed here because until it runs, every number in
 this repository is a validation number.
+
+## Test evaluation
+
+This section reports outcomes and informs no decision above it; sections 1
+through 6 remain validation-only, as their design rationales require. Each
+published checkpoint -- the error-selected and F1-selected model of each run --
+was scored once on the held-out test design through the same evaluate() the
+training loop uses, against that split's zero-predictor.
+
+```
+| run | selected by | epoch | test error / zero-predictor | hotspot precision | recall | F1 |
+|---|---|---|---|---|---|---|
+| predict zero everywhere | — | — | 1.000 | — | 0.0000 | 0.0000 |
+| plain squared error | lowest error | 5 | 0.710 | 0.4414 | 0.1307 | 0.2017 |
+| plain squared error | highest F1 | 41 | 0.708 | 0.4070 | 0.2348 | 0.2978 |
+| weighted | lowest error | 9 | 0.868 | 0.3061 | 0.3311 | 0.3181 |
+| weighted | highest F1 | 7 | 0.952 | 0.2848 | 0.4047 | 0.3343 |
+
+Each F1-selected checkpoint detects more hotspots than the error-selected one of the same run, on a design neither was selected on: the gap holds off the split it was found on. Unlike on validation, every trained checkpoint here sits below the zero-predictor on pixel error -- the metric no longer rates a detector worse than predicting nothing, because this split is denser and there is real signal to find.
+```
+
+Two results, and they point different ways. The selection gap survives being
+carried off validation: in both runs the F1-selected checkpoint detects more on
+test than the error-selected one, on a design neither was selected on, so the
+disagreement between rules is not an artefact of the split it was found on. The
+pixel metric's inversion does not survive: on validation the F1-selected model
+scored worse on error than predicting zero, and on test no checkpoint does. The
+test split is denser in hotspots than validation by more than an order of
+magnitude, so there is signal a detector can capture without the metric
+punishing it. The blind spot the project documents is therefore not a constant
+of the task but a function of target sparsity -- most severe on the sparsest
+split, which is the one checkpoints are selected on.

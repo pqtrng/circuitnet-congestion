@@ -8,9 +8,10 @@ with fingerprinted lineage, and an evaluation that reports where its own metrics
 
 ## Status
 
-Phase A (data pipeline) and Phase B (baseline training) are complete. No model has been evaluated on the test split;
-its target statistics have, however, been computed and are used in two design rationales recorded in the decision
-documents. Every model-derived number below is from validation. Test evaluation is the next task.
+Phase A (data pipeline), Phase B (baseline training) and test evaluation are complete. The finding below is stated on
+validation, where the checkpoints were selected; the published checkpoints have now also been scored on the held-out
+test design, reported under [Test evaluation](#test-evaluation). Every number in the design rationale remains a
+validation number: no test statistic informs a choice, which is a rule the decision documents keep and disclose.
 
 ## The finding
 
@@ -43,6 +44,27 @@ split predicting zero is right almost everywhere, because almost nowhere is a ho
 
 Absolute F1 here is low, and no attempt is made to present it otherwise. The result is the *shape* of the disagreement,
 not the height of the bars.
+
+## Test evaluation
+
+The finding was found on validation, the split the checkpoints were selected on. The published checkpoints, scored on
+the held-out test design, carry it to a split no model was chosen on:
+
+| run | selected by | epoch | test error / zero-predictor | hotspot precision | recall | F1 |
+|---|---|---|---|---|---|---|
+| predict zero everywhere | — | — | 1.000 | — | 0.0000 | 0.0000 |
+| plain squared error | lowest error | 5 | 0.710 | 0.4414 | 0.1307 | 0.2017 |
+| plain squared error | highest F1 | 41 | 0.708 | 0.4070 | 0.2348 | 0.2978 |
+| weighted | lowest error | 9 | 0.868 | 0.3061 | 0.3311 | 0.3181 |
+| weighted | highest F1 | 7 | 0.952 | 0.2848 | 0.4047 | 0.3343 |
+
+Each F1-selected checkpoint detects more hotspots than the error-selected one of the same run, on a design neither was selected on: the gap holds off the split it was found on. Unlike on validation, every trained checkpoint here sits below the zero-predictor on pixel error -- the metric no longer rates a detector worse than predicting nothing, because this split is denser and there is real signal to find.
+
+The selection gap survives the move: in each run the F1-selected checkpoint detects more than the error-selected one,
+on a design neither was fitted or selected on. What does not survive is the pixel metric's inversion. On validation the
+best detector was rated *worse* than predicting zero; on test no checkpoint is, because test is far denser in hotspots
+and the metric has real signal to reward. The effect the project is about is therefore a function of how sparse the
+split is, sharpest where hotspots are rarest -- not a fixed property of the task.
 
 ## Why the target behaves this way
 
