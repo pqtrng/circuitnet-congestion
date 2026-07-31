@@ -518,3 +518,39 @@ without those, a reported number has no link to the model that produced it.
   transfer.
 - The epoch budget was chosen to fit two runs in one session. Neither run had
   converged when it stopped; the training objective was still descending.
+- The prose layer of this repository was written after both runs had finished,
+  in a single pass with nothing checking it. An audit of that pass found figures
+  no artefact supported, claims the artefact they cited contradicted, and
+  quantities carried over from runs whose records were not retained. The
+  scientific result survived; the bookkeeping did not. One commit in that
+  sequence argued in its own message that a repository about evaluation honesty
+  cannot leave unreproducible claims in its documentation, and in the same
+  change widened an accurate statement about batch-size flatness into a false
+  one and replaced two unsupported claims with two others. The gate under
+  `tests/test_prose_claims.py` was built before those corrections rather than
+  after, which is why its baseline shrinks through the history instead of
+  appearing empty at the end.
+- That gate has two known holes, both load-bearing. A claim carrying no quantity
+  is invisible to a pattern match, and several of the most serious corrections
+  were of exactly that kind -- a stale mention of mixed precision, a sentence
+  describing accelerator capability, a verb implying a value was derived when it
+  was chosen. And a pointer that resolves is not a pointer that supports: the
+  two withdrawn claims about half precision cited real keys holding real values
+  in a real artefact, so replacing their figures with pointers would have passed
+  both the prose gate and the pointer-resolution test while the sentences went
+  on describing something the probe never measured. Reading probe source against
+  probe output is what caught them, and no test here does that.
+- A digest identifies a file, not a model. The best-error checkpoint and the
+  periodic checkpoint for the same epoch hold the same weights and differ only
+  in metadata, so their digests differ. A digest confirms a file arrived intact;
+  it does not establish that two files hold the same model.
+- Some weights are gone. `unet_a`'s weighted-error selection is epoch 18, whose
+  write was gated on the training loss and whose epoch was not on the periodic
+  grid; the run is not bitwise reproducible, so that selection is metric-only
+  permanently. The three superseded runs record digests for files deleted after
+  the fact. Section 6 marks which selections can be loaded and which cannot.
+- `unet_b` was trained from a modified worktree. The committed code of the two
+  runs is identical, which section 6 verifies by comparing the revisions
+  directly, but the uncommitted difference was not captured and cannot be
+  recovered. The independent variable in that comparison is the loss
+  configuration plus an unquantified delta.
