@@ -196,8 +196,7 @@ def _provenance(runs: dict[str, Any]) -> list[str]:
                 text=True,
             ).stdout.split()
             lines.append(
-                "The committed training code DIFFERS between the two revisions: "
-                + ", ".join(names)
+                "The committed training code DIFFERS between the two revisions: " + ", ".join(names)
             )
         else:
             lines.append(

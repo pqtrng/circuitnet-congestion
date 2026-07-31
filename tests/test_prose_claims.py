@@ -94,9 +94,7 @@ def _emit(text: str, rel_path: str, found: set[str]) -> None:
 def _scan_python(path: Path, rel_path: str, found: set[str]) -> None:
     source = path.read_text(encoding="utf-8")
     for node in ast.walk(ast.parse(source)):
-        if isinstance(
-                node, (ast.Module, ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)
-        ):
+        if isinstance(node, (ast.Module, ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)):
             doc = ast.get_docstring(node, clean=False)
             if doc:
                 _emit(doc, rel_path, found)
@@ -119,9 +117,7 @@ def collect_claims() -> set[str]:
             rel_path = path.relative_to(ROOT).as_posix()
             raw = path.read_text(encoding="utf-8")
             if path.suffix in {".yaml", ".yml"}:
-                raw = "\n".join(
-                    line for line in raw.splitlines() if line.lstrip().startswith("#")
-                )
+                raw = "\n".join(line for line in raw.splitlines() if line.lstrip().startswith("#"))
             _emit(raw, rel_path, found)
     return found
 
@@ -175,9 +171,8 @@ def test_no_measurement_prose_outside_the_baseline() -> None:
     invariant, pending = _read_baseline()
     unexpected = sorted(claims - invariant - pending)
     assert not unexpected, (
-            "New quantities in prose. Move each into an artefact and leave a pointer,"
-            " or add it to the INVARIANT section with a reason:\n  "
-            + "\n  ".join(unexpected)
+        "New quantities in prose. Move each into an artefact and leave a pointer,"
+        " or add it to the INVARIANT section with a reason:\n  " + "\n  ".join(unexpected)
     )
 
 
@@ -186,8 +181,8 @@ def test_baseline_has_no_orphaned_entries() -> None:
     invariant, pending = _read_baseline()
     orphans = sorted((invariant | pending) - collect_claims())
     assert not orphans, (
-            "These baseline entries no longer match any source line. Delete them:\n  "
-            + "\n  ".join(orphans)
+        "These baseline entries no longer match any source line. Delete them:\n  "
+        + "\n  ".join(orphans)
     )
 
 
@@ -216,6 +211,4 @@ def test_artefact_pointers_resolve() -> None:
         for match in ARTEFACT_REF.finditer(path.read_text(encoding="utf-8")):
             if not (ROOT / match.group(0)).is_file():
                 missing.append(f"{rel_path}: {match.group(0)}")
-    assert not missing, "prose points at artefacts that do not exist:\n  " + "\n  ".join(
-        missing
-    )
+    assert not missing, "prose points at artefacts that do not exist:\n  " + "\n  ".join(missing)

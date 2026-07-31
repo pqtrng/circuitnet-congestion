@@ -82,9 +82,9 @@ LOSS_WEIGHTED_MSE = "masked_weighted_mse"
 
 
 def _validate_shapes(
-        prediction: torch.Tensor,
-        target: torch.Tensor,
-        mask: torch.Tensor,
+    prediction: torch.Tensor,
+    target: torch.Tensor,
+    mask: torch.Tensor,
 ) -> None:
     if prediction.shape != target.shape:
         raise ValueError(
@@ -99,9 +99,9 @@ def _validate_shapes(
 
 
 def masked_sum_and_weight(
-        values: torch.Tensor,
-        mask: torch.Tensor,
-        weight: torch.Tensor | None = None,
+    values: torch.Tensor,
+    mask: torch.Tensor,
+    weight: torch.Tensor | None = None,
 ) -> tuple[torch.Tensor, torch.Tensor]:
     """Return the masked weighted sum of ``values`` and its total weight.
 
@@ -113,9 +113,9 @@ def masked_sum_and_weight(
 
 
 def masked_mean(
-        values: torch.Tensor,
-        mask: torch.Tensor,
-        weight: torch.Tensor | None = None,
+    values: torch.Tensor,
+    mask: torch.Tensor,
+    weight: torch.Tensor | None = None,
 ) -> torch.Tensor:
     """Global masked mean over valid pixels. Returns zero if none are valid."""
     total, count = masked_sum_and_weight(values, mask, weight)
@@ -123,10 +123,10 @@ def masked_mean(
 
 
 def hotspot_weight(
-        target: torch.Tensor,
-        *,
-        threshold: float = DEFAULT_HOTSPOT_THRESHOLD,
-        positive_weight: float = DEFAULT_POSITIVE_WEIGHT,
+    target: torch.Tensor,
+    *,
+    threshold: float = DEFAULT_HOTSPOT_THRESHOLD,
+    positive_weight: float = DEFAULT_POSITIVE_WEIGHT,
 ) -> torch.Tensor:
     """Binary class weight: ``positive_weight`` above the threshold, one below.
 
@@ -158,10 +158,10 @@ class MaskedMSELoss(nn.Module):
     """Squared error over valid pixels, reduced as a single global mean."""
 
     def forward(
-            self,
-            prediction: torch.Tensor,
-            target: torch.Tensor,
-            mask: torch.Tensor,
+        self,
+        prediction: torch.Tensor,
+        target: torch.Tensor,
+        mask: torch.Tensor,
     ) -> torch.Tensor:
         _validate_shapes(prediction, target, mask)
         return masked_mean((prediction - target).square(), mask)
@@ -182,9 +182,9 @@ class MaskedWeightedMSELoss(nn.Module):
     """
 
     def __init__(
-            self,
-            threshold: float = DEFAULT_HOTSPOT_THRESHOLD,
-            positive_weight: float = DEFAULT_POSITIVE_WEIGHT,
+        self,
+        threshold: float = DEFAULT_HOTSPOT_THRESHOLD,
+        positive_weight: float = DEFAULT_POSITIVE_WEIGHT,
     ) -> None:
         super().__init__()
         if positive_weight <= 0.0:
@@ -193,10 +193,10 @@ class MaskedWeightedMSELoss(nn.Module):
         self.positive_weight = positive_weight
 
     def forward(
-            self,
-            prediction: torch.Tensor,
-            target: torch.Tensor,
-            mask: torch.Tensor,
+        self,
+        prediction: torch.Tensor,
+        target: torch.Tensor,
+        mask: torch.Tensor,
     ) -> torch.Tensor:
         _validate_shapes(prediction, target, mask)
         weight = hotspot_weight(
@@ -226,10 +226,10 @@ class MaskedMeanAccumulator:
         self.weight = 0.0
 
     def update(
-            self,
-            values: torch.Tensor,
-            mask: torch.Tensor,
-            weight: torch.Tensor | None = None,
+        self,
+        values: torch.Tensor,
+        mask: torch.Tensor,
+        weight: torch.Tensor | None = None,
     ) -> None:
         with torch.no_grad():
             total, count = masked_sum_and_weight(values.detach(), mask, weight)

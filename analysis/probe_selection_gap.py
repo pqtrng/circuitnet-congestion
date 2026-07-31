@@ -143,9 +143,7 @@ def probe_run(run_dir: Path) -> dict[str, Any] | None:
         "baseline_val_zero_predictor_mse": baseline,
         "git": record.get("git"),
         "checkpoints_recorded": len(recorded_checkpoints),
-        "checkpoints_surviving": sum(
-            1 for name in recorded_checkpoints if checkpoint_exists(name)
-        ),
+        "checkpoints_surviving": sum(1 for name in recorded_checkpoints if checkpoint_exists(name)),
         "selections": selections,
         "gap_between_error_and_f1": gap,
     }

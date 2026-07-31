@@ -93,8 +93,7 @@ def _range_evidence(record: dict[str, Any]) -> list[str]:
         "",
         f"  largest activation, model at initialisation  {activation['largest_activation']:.1f}"
         f"  (from {activation['produced_by']})",
-        f"  half precision finite ceiling                "
-        f"{activation['float16_ceiling']:.0f}",
+        f"  half precision finite ceiling                {activation['float16_ceiling']:.0f}",
         "",
         f"  squared errors examined                      "
         f"{magnitudes['squared_errors_examined']:,} valid pixels",

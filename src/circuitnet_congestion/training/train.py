@@ -109,7 +109,7 @@ CHECKPOINT_LAST = "last.pt"
 RUN_RECORD = "run.json"
 HISTORY = "history.jsonl"
 
-BYTES_PER_GIB = 2 ** 30
+BYTES_PER_GIB = 2**30
 
 
 # --------------------------------------------------------------------------- #
@@ -350,12 +350,12 @@ def zero_predictor_baseline(loader: DataLoader, device: torch.device) -> float:
 
 @torch.inference_mode()
 def evaluate(
-        model: nn.Module,
-        loader: DataLoader,
-        device: torch.device,
-        *,
-        threshold: float,
-        positive_weight: float,
+    model: nn.Module,
+    loader: DataLoader,
+    device: torch.device,
+    *,
+    threshold: float,
+    positive_weight: float,
 ) -> EvalResult:
     model.eval()
     mse = MaskedMeanAccumulator()
@@ -389,11 +389,11 @@ def evaluate(
 
 
 def train_one_epoch(
-        model: nn.Module,
-        loader: DataLoader,
-        loss_fn: nn.Module,
-        optimizer: torch.optim.Optimizer,
-        device: torch.device,
+    model: nn.Module,
+    loader: DataLoader,
+    loss_fn: nn.Module,
+    optimizer: torch.optim.Optimizer,
+    device: torch.device,
 ) -> tuple[float, int]:
     """Run one epoch; return the epoch objective and the number of images seen."""
     model.train()
@@ -423,16 +423,16 @@ def train_one_epoch(
 
 
 def save_checkpoint(
-        path: Path,
-        *,
-        model: nn.Module,
-        optimizer: torch.optim.Optimizer,
-        epoch: int,
-        config: TrainConfig,
-        result: EvalResult,
-        selection: dict[str, float],
-        include_optimizer: bool = True,
-        progress: dict[str, Any] | None = None,
+    path: Path,
+    *,
+    model: nn.Module,
+    optimizer: torch.optim.Optimizer,
+    epoch: int,
+    config: TrainConfig,
+    result: EvalResult,
+    selection: dict[str, float],
+    include_optimizer: bool = True,
+    progress: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     path.parent.mkdir(parents=True, exist_ok=True)
     payload: dict[str, Any] = {
@@ -801,9 +801,9 @@ def main() -> None:
             )
 
         if (
-                not shrinkage_warned
-                and epoch >= SHRINKAGE_WARNING_EPOCH
-                and result.prediction_max < config.eval.hotspot_threshold
+            not shrinkage_warned
+            and epoch >= SHRINKAGE_WARNING_EPOCH
+            and result.prediction_max < config.eval.hotspot_threshold
         ):
             shrinkage_warned = True
             print(
