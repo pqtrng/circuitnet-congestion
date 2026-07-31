@@ -1,4 +1,4 @@
-.PHONY: setup fmt lint test check clean ci-status ci-watch acquire bronze silver gold report train board probe
+.PHONY: setup fmt lint test check clean ci-status ci-watch acquire bronze silver gold report report-check train board probe
 
 CONFIG ?= configs/unet_a.yaml
 
@@ -46,6 +46,13 @@ gold:
 
 report:
 	uv run python -m analysis.render_report
+
+# Re-render from committed artefacts and fail if anything moved. This is the
+# repository's central claim made testable: a clone with no data layer and no
+# accelerator regenerates every document byte-for-byte.
+report-check:
+	uv run python -m analysis.render_report
+	git diff --exit-code -- README.md docs/*.md
 
 train:
 	uv run python -m circuitnet_congestion.training.train --config $(CONFIG)

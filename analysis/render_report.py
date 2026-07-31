@@ -17,7 +17,6 @@ from __future__ import annotations
 
 import importlib
 import re
-from datetime import date
 from pathlib import Path
 
 DOCS = Path("docs")
@@ -39,7 +38,7 @@ def render(template_path: Path) -> str:
         module = importlib.import_module(f"analysis.audit_{name}")
         text = text.replace(f"<!--TABLE:{name}-->", module.run())
 
-    return text.replace("<!--DATE-->", date.today().isoformat())
+    return text
 
 
 def main() -> None:

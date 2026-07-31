@@ -60,6 +60,10 @@ torch = [
 [tool.ruff]
 line-length = 100
 target-version = "py312"
+# The generated Markdown documents have exactly one writer: make report.
+# Restrict ruff to Python so a future version formatting Markdown cannot
+# silently become a second one.
+include = ["*.py", "*.pyi"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
