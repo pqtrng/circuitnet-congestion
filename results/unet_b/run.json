@@ -3,8 +3,9 @@
   "smoke": false,
   "started_utc": "2026-07-26T18:42:37Z",
   "git": {
-    "revision": "18ac550cb778877673b5be29ff8ae29a8ddbf516",
-    "dirty": true
+    "revision": "06554552b030dbbec44e26352a6520cc3d53bda2",
+    "dirty": true,
+    "revision_before_history_rewrite": "18ac550cb778877673b5be29ff8ae29a8ddbf516"
   },
   "config": {
     "run_name": "unet_b",

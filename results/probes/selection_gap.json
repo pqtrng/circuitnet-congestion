@@ -264,8 +264,9 @@
       "loss": "masked_mse",
       "baseline_val_zero_predictor_mse": 1.29870199355839e-05,
       "git": {
-        "revision": "0d1c53e012a6b851ac3dbda7876593dd811aa7bf",
-        "dirty": false
+        "revision": "e967988cb185ef8b5e5c15781f759495efa8f9c4",
+        "dirty": false,
+        "revision_before_history_rewrite": "0d1c53e012a6b851ac3dbda7876593dd811aa7bf"
       },
       "checkpoints_recorded": 15,
       "checkpoints_surviving": 15,
@@ -364,8 +365,9 @@
       "loss": "masked_weighted_mse",
       "baseline_val_zero_predictor_mse": 1.29870199355839e-05,
       "git": {
-        "revision": "18ac550cb778877673b5be29ff8ae29a8ddbf516",
-        "dirty": true
+        "revision": "06554552b030dbbec44e26352a6520cc3d53bda2",
+        "dirty": true,
+        "revision_before_history_rewrite": "18ac550cb778877673b5be29ff8ae29a8ddbf516"
       },
       "checkpoints_recorded": 16,
       "checkpoints_surviving": 16,

@@ -1,6 +1,6 @@
 # Training Decisions — CircuitNet-N14 Congestion Baseline
 
-_Generated 2026-07-30 by `make report`. Every number below is produced by a probe
+_Generated 2026-07-31 by `make report`. Every number below is produced by a probe
 under `analysis/`, not written by hand._
 
 _The probes require the Gold layer and exclusive use of an accelerator, so they
@@ -455,10 +455,10 @@ the similar name.
 
 Provenance of the canonical runs:
 
-  unet_a: revision 0d1c53e012, clean worktree
-  unet_b: revision 18ac550cb7, dirty worktree
+  unet_a: revision e967988cb1, clean worktree
+  unet_b: revision 06554552b0, dirty worktree
 
-The committed training code is identical between the two revisions: `git diff 0d1c53e012 18ac550cb7 -- src configs` is empty.
+The committed training code is identical between the two revisions: `git diff 06554552b0 e967988cb1 -- src configs` is empty.
 unet_b was run from a modified worktree; the modification was not captured and cannot be recovered. Any comparison involving it is the configured difference plus an unquantified uncommitted delta.
 
 Across 5 runs the two rules never select the same epoch.
