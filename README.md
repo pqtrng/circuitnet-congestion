@@ -26,14 +26,20 @@ On this target, the metric used to select a checkpoint changes the resulting mod
 
 The reference row predicts zero at every pixel: on the validation split that leaves 99.0% of valid pixels exactly right while finding none of the 0.044% that are hotspots. Bold marks a pixel error above it -- the metric rating a trained model worse than predicting nothing.
 
-The two rules never pick the same epoch, in any run recorded. In the plain run they land tens of epochs apart and
-differ by an order of magnitude in hotspot F1. The model that detects hotspots best is one that squared error rates as *worse than
-predicting zero everywhere* — and the loss curve descends smoothly throughout, giving no indication that this is
-happening.
+The two rules never pick the same epoch, in any run recorded. In the plain run they land tens of epochs apart. The
+reference row is the reason this matters: across the whole run the pixel metric never separates a trained model from
+predicting nothing by more than a narrow margin either way — the best it rates lands a few percent below that
+predictor, the model that actually detects the most hotspots a hair above it. The entire trajectory the metric sees
+is a band around a useless predictor, and the loss curve descends smoothly through all of it, giving no sign that the
+selection underneath is turning over. Read the same rows by hotspot recall instead and the runs are an order of
+magnitude apart.
 
-This is not a subtle effect. It follows directly from the target: nearly all valid pixels are zero -- the split-by-split
-fractions are rendered below -- so a predictor that outputs nothing achieves a low error, and a model is rewarded for
-staying near it.
+Precision and recall sit beside F1 because a single F1 hides which half fails, and the two runs fail differently: the
+plain run holds the table's highest precision while its recall collapses to almost nothing, so it is not detecting
+hotspots so much as declining to guess. The weighted run trades that for balanced but low detection on both sides.
+
+This is not a subtle effect. It follows directly from the target, measured below before any model exists: on every
+split predicting zero is right almost everywhere, because almost nowhere is a hotspot.
 
 Absolute F1 here is low, and no attempt is made to present it otherwise. The result is the *shape* of the disagreement,
 not the height of the bars.
@@ -44,6 +50,17 @@ Ground truth is global-routing overflow divided by track capacity. That makes it
 and a per-design, per-layer denominator — not a continuous field but a grid of fractions, dominated by a single value.
 
 Validation rests on a single design (Vortex-large) and test on another (openc910-1); training holds the rest.
+
+| split | valid pixels | zero-predictor correct | pixels that are hotspots |
+|---|---|---|---|
+| train | 461,483,142 | 98.4% | 0.153% |
+| val | 98,090,840 | 99.0% | 0.044% |
+| test | 51,515,921 | 94.4% | 1.225% |
+
+A metric can be almost perfect and useless at the same time, and the two columns above are how: predicting zero scores
+well on every split while finding none of the hotspots, which are the entire point of the task. This is why the project
+reports a domain hotspot metric rather than pixel error alone, and why absolute error is not comparable between splits
+in the first place -- the fraction that is a hotspot, and so the error there is to make, differs across them.
 
 | split | patches | non-zero pixels | zero-predictor error |
 |-------|---------|-----------------|----------------------|
