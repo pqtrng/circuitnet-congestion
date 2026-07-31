@@ -66,3 +66,6 @@ probe:
 	uv run python -m analysis.probe_throughput
 	uv run python -m analysis.probe_precision
 	uv run python -m analysis.probe_optimisation
+
+probe-test:
+	uv run python -m analysis.probe_test_eval

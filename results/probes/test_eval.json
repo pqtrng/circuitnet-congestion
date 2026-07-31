@@ -1,0 +1,62 @@
+{
+  "runs": {
+    "unet_a": {
+      "loss": "masked_mse",
+      "test_patches": 3657,
+      "baseline_test_zero_predictor_mse": 0.00013602193223396836,
+      "selections": {
+        "best_val_mse": {
+          "epoch": 5,
+          "sha256": "2c053a190fda792b2441498fab4c0f0404eaf5e7d51e21c27080adfaeccba99b",
+          "test_mse": 9.655057112631959e-05,
+          "test_weighted_mse": 0.0005506113214970912,
+          "test_prediction_max": 0.14804452657699585,
+          "test_recall": 0.13071676511783692,
+          "test_precision": 0.4414085330216248,
+          "test_f1": 0.20170230444147155,
+          "test_mse_over_baseline": 0.7098162005245232
+        },
+        "best_val_f1": {
+          "epoch": 41,
+          "sha256": "9e36d3c4cfa27ebd44fa3951692b1cb8995923d7b773e1b3fd1fbcfe04f97a69",
+          "test_mse": 9.631025383161322e-05,
+          "test_weighted_mse": 0.0005053761049761806,
+          "test_prediction_max": 0.199847012758255,
+          "test_recall": 0.23484690656059795,
+          "test_precision": 0.4069705763916853,
+          "test_f1": 0.2978285368205731,
+          "test_mse_over_baseline": 0.7080494465109645
+        }
+      }
+    },
+    "unet_b": {
+      "loss": "masked_weighted_mse",
+      "test_patches": 3657,
+      "baseline_test_zero_predictor_mse": 0.00013602193223396836,
+      "selections": {
+        "best_val_mse": {
+          "epoch": 9,
+          "sha256": "dd73ff359ff4ff2973f6a4186b9af4791e8d2a9ea525df4a030a510bdca82d9b",
+          "test_mse": 0.00011808715277507111,
+          "test_weighted_mse": 0.0004407145985517873,
+          "test_prediction_max": 0.1658981591463089,
+          "test_recall": 0.3310587533934404,
+          "test_precision": 0.30612743899457184,
+          "test_f1": 0.3181053498766183,
+          "test_mse_over_baseline": 0.8681478849451424
+        },
+        "best_val_f1": {
+          "epoch": 7,
+          "sha256": "128f4350edea1e167e6d68731e8b60a3515637cd8cd4c06aafea67d199521822",
+          "test_mse": 0.0001295298390868059,
+          "test_weighted_mse": 0.0004184706761012872,
+          "test_prediction_max": 0.16586998105049133,
+          "test_recall": 0.40465193798698074,
+          "test_precision": 0.28478461430881913,
+          "test_f1": 0.33429804586135675,
+          "test_mse_over_baseline": 0.9522717179462239
+        }
+      }
+    }
+  }
+}
