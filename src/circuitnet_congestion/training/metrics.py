@@ -18,8 +18,10 @@ number of valid pixels, which is never the case here.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
-import torch
+if TYPE_CHECKING:
+    import torch
 
 
 def masked_max(values: torch.Tensor, mask: torch.Tensor) -> torch.Tensor:
@@ -37,6 +39,10 @@ def masked_max(values: torch.Tensor, mask: torch.Tensor) -> torch.Tensor:
     reachable with the gold layer, whose least-covered patch still has valid
     pixels; a batch of pure padding would mean the loader is wrong.
     """
+    # Imported here rather than at module scope so the documentation layer
+    # can use the confusion-count arithmetic without the training stack.
+    import torch
+
     neutral = torch.full_like(values, torch.finfo(values.dtype).min)
     largest = torch.where(mask > 0, values, neutral).max()
     return torch.where(mask.sum() > 0, largest, torch.zeros_like(largest))

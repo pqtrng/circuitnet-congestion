@@ -16,12 +16,15 @@ documents. Every model-derived number below is from validation. Test evaluation 
 
 On this target, the metric used to select a checkpoint changes the resulting model more than the loss function does.
 
-| run | selected by | epoch | val error / zero-predictor | hotspot F1 |
-|---------------------|--------------|-------|----------------------------|------------|
-| plain squared error | lowest error | 5 | 0.949 | 0.0022 |
-| plain squared error | highest F1 | 41 | **1.001** | **0.0356** |
-| weighted | lowest error | 9 | 1.187 | 0.0503 |
-| weighted | highest F1 | 7 | 1.296 | **0.0740** |
+| run | selected by | epoch | pixel error / zero-predictor | hotspot precision | recall | F1 |
+|---|---|---|---|---|---|---|
+| predict zero everywhere | — | — | 1.000 | — | 0.0000 | 0.0000 |
+| plain squared error | lowest error | 5 | 0.949 | 0.2160 | 0.0011 | 0.0022 |
+| plain squared error | highest F1 | 41 | **1.001** | 0.1097 | 0.0213 | 0.0356 |
+| weighted | lowest error | 9 | **1.187** | 0.0667 | 0.0404 | 0.0503 |
+| weighted | highest F1 | 7 | **1.296** | 0.0727 | 0.0754 | 0.0740 |
+
+The reference row predicts zero at every pixel: on the validation split that leaves 99.0% of valid pixels exactly right while finding none of the 0.044% that are hotspots. Bold marks a pixel error above it -- the metric rating a trained model worse than predicting nothing.
 
 The two rules never pick the same epoch, in any run recorded. In the plain run they land tens of epochs apart and
 differ by an order of magnitude in hotspot F1. The model that detects hotspots best is one that squared error rates as *worse than

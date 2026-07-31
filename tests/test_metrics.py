@@ -66,6 +66,23 @@ def test_shrunk_model_raises_every_alarm() -> None:
     assert counts.f1 == 0.0
 
 
+def test_a_zero_prediction_detects_nothing() -> None:
+    """The reference row of the README's headline table stands for a predictor
+    that outputs zero at every pixel. That row is rendered from HotspotCounts
+    rather than from a run, so what the stand-in assumes is pinned here: nothing
+    predicted positive, and every hotspot pixel in the split missed."""
+    target = torch.zeros(1, 1, 100, 1)
+    target[0, 0, :30, 0] = 0.07
+    mask = torch.ones(1, 1, 100, 1)
+
+    counts = hotspot_counts(torch.zeros_like(target), target, mask, THRESHOLD)
+
+    assert counts == HotspotCounts(true_positive=0, false_positive=0, false_negative=30)
+    assert counts.predicted_positive == 0
+    assert counts.recall == 0.0
+    assert counts.f1 == 0.0
+
+
 def test_perfect_prediction_scores_one() -> None:
     target = torch.zeros(1, 1, 100, 1)
     target[0, 0, :30, 0] = 0.07
