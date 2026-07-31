@@ -71,7 +71,13 @@ PHRASE = re.compile(
     r"nineteen|twenty|thirty|forty|fifty|sixty|ninety|hundred|thousand|million|"
     r"several|many)"
     r"(?:[-\s](?:one|two|three|four|five|six|seven|eight|nine))?\s+"
-    r"(?:times|percent|per\s+cent|orders|hundred|thousand|million|faster|slower)\b",
+    r"(?:times|percent|per\s+cent|orders|hundred|thousand|million|faster|slower|"
+    # Fractions written as words. Their absence let "256 would pad roughly
+    # three quarters of them" into the baseline only because a digit happened
+    # to sit on the same line.
+    r"quarters?|thirds?|halves|half)\b"
+    r"|\b(?:twice|thrice|tenfold|hundredfold|dozens|hundreds|thousands|millions)\b"
+    r"|\ban?\s+(?:quarter|third|half)\s+of\b",
     re.IGNORECASE,
 )
 ARTEFACT_REF = re.compile(

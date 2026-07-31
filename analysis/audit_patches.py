@@ -1,4 +1,4 @@
-"""T5 audit: patch counts per split and normalization statistics."""
+"""Task 5 audit: patch counts per split and normalization statistics."""
 
 from __future__ import annotations
 

@@ -1,4 +1,4 @@
-"""T2 audit: what was acquired, from which pinned revision."""
+"""Task 2 audit: what was acquired, from which pinned revision."""
 
 from __future__ import annotations
 

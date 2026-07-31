@@ -1,4 +1,4 @@
-"""T4 audit: GT congestion sparsity — evidence that pixel metrics mislead."""
+"""Task 4 audit: GT congestion sparsity — evidence that pixel metrics mislead."""
 
 from __future__ import annotations
 

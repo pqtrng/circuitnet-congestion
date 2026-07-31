@@ -1,4 +1,4 @@
-"""T4 audit: duplicate detection via Silver SHA-1."""
+"""Task 4 audit: duplicate detection via Silver SHA-1."""
 
 from __future__ import annotations
 

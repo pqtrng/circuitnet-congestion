@@ -7,7 +7,12 @@ README.md.tmpl::**Model.** U-Net, depth 4, 7.8M parameters, bilinear upsampling,
 README.md.tmpl::**Patches** are 128×128 crops at native resolution, never resized: congestion is a density on a physical routing grid,
 README.md.tmpl::- A 128×128 patch gives a local receptive field. Congestion driven by global layout structure beyond one patch is
 README.md.tmpl::Model weights are excluded from the repository. Every run record stores a SHA-256 per checkpoint alongside the git
+analysis/probe_optimisation.py::# Cheap gate before the full sweep: same configuration, twice, compared exactly.
+analysis/probe_optimisation.py::Run one configuration twice and compare the losses exactly.
+analysis/probe_precision.py::before -- twice, in opposite directions.
+analysis/probe_precision.py::failure and a precision failure would separate the two half-width formats. The
 analysis/probe_throughput.py::# A per-image time this many times the flat-region median is treated as spill
+analysis/probe_throughput.py::The check that does work is repetition. One batch size is timed twice, at the
 docs/data_decisions.md.tmpl::resolution. Patch size 128 was chosen over 256 because it requires no padding for
 docs/data_decisions.md.tmpl::samples -- the exact shares are rendered below -- and 128 yields a substantially
 docs/data_decisions.md.tmpl::the smallest chips, while a 256 window exceeds the smaller dimension of most
@@ -19,15 +24,18 @@ src/circuitnet_congestion/data/provenance.py::# UTC ISO-8601
 src/circuitnet_congestion/data/silver.py::# (integer 0 -> float 0.0); this only normalizes the storage dtype.
 src/circuitnet_congestion/models/unet.py::128 -> 64 -> 32 -> 16 -> 8, so a bottleneck unit summarises a 16x16 input
 src/circuitnet_congestion/models/unet.py::Default width is deliberately modest (base 32, ~7.8M parameters). The
+src/circuitnet_congestion/models/unet.py::twice under two different loss formulations, and it has to fit -- in single
 src/circuitnet_congestion/training/dataset.py::# multiplicatively and summed over 16384 pixels, which overflows an
 src/circuitnet_congestion/training/dataset.py::features : float32 [3, 128, 128] z-scored (cell_density, rudy) + binary macro_region
 src/circuitnet_congestion/training/dataset.py::gt : float32 [128, 128] raw congestion = max(horizontal, vertical)
 src/circuitnet_congestion/training/dataset.py::mask : uint8 [128, 128] 1 = real die area, 0 = edge zero-padding
+src/circuitnet_congestion/training/train.py::# Only the resume checkpoint carries optimiser moments. They are twice
 tests/test_dataset.py::The mask is cast at read time: it is summed over 16384 pixels downstream,
 tests/test_gold.py::# mean over VALID pixels only = 10.0 (not diluted by padded zeros)
 tests/test_losses.py::gap. The level 1/20 is exactly five percent and the strict comparison
 tests/test_metrics.py::probability 0.3 and value 0.07. This minimises squared error and detects
 tests/test_silver.py::# gt = max(0, 0.3) = 0.3, no crash from int dtype
 tests/test_silver.py::# max(0.5, 0.3)
+tests/test_train.py::Optimiser moments are twice the size of the weights and are never read
 
 # PENDING -- measurements to relocate. Must reach zero.
