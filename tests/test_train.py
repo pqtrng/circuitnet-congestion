@@ -337,12 +337,15 @@ def test_training_run_writes_a_complete_record(tmp_path: Path, monkeypatch) -> N
         "checkpoints",
         "selection",
     }
-    assert set(record["best"]) == {"val_mse", "val_objective", "val_f1"}
+    assert set(record["best"]) == {"val_mse", "val_weighted_mse", "val_f1"}
 
     checkpoints = record["checkpoints"]
     assert "best_val_mse.pt" in checkpoints
     assert "best_val_f1.pt" in checkpoints
-    assert "best_val_objective.pt" not in checkpoints
+    # This assertion is inverted from what it was. It used to require that an
+    # unweighted run write no weighted-error checkpoint, which pinned the gate
+    # that cost one canonical run its epoch-18 weights permanently.
+    assert "best_val_weighted_mse.pt" in checkpoints
     for entry in checkpoints.values():
         assert len(entry["sha256"]) == 64
 
@@ -374,7 +377,7 @@ def test_weighted_run_keeps_a_second_checkpoint(tmp_path: Path, monkeypatch) -> 
     train_module.main()
     record = json.loads((tmp_path / "results" / "weighted" / "run.json").read_text())
 
-    assert "best_val_objective.pt" in record["checkpoints"]
+    assert "best_val_weighted_mse.pt" in record["checkpoints"]
 
 
 def test_resume_without_a_checkpoint_fails_loudly(tmp_path: Path, monkeypatch) -> None:
@@ -465,6 +468,30 @@ def test_resume_preserves_digests_from_earlier_sessions(tmp_path: Path, monkeypa
 
     assert "epoch_002.pt" in record["checkpoints"]
     assert record["checkpoints"]["last.pt"]["epoch"] == 3
+
+
+def test_weighted_error_checkpoint_is_written_for_an_unweighted_run(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """The weighted-error selection rule used to write a checkpoint only when
+    the training loss was the weighted one. The metric is computed every epoch
+    regardless, so the gate did not decide whether the rule had a selection --
+    only whether that selection had weights. One canonical run selected epoch
+    18 under this rule with no file written and the epoch off the periodic
+    grid, which cannot be recovered. The rule now writes for every run."""
+    gold = _write_gold(tmp_path)
+    config_path = _write_config(tmp_path, gold, epochs=2, name="unweighted")
+    assert "masked_mse" in config_path.read_text()
+    monkeypatch.setattr(sys, "argv", ["train", "--config", str(config_path)])
+
+    train_module.main()
+
+    record = json.loads((tmp_path / "results" / "unweighted" / "run.json").read_text())
+    written = tmp_path / "results" / "unweighted" / "checkpoints"
+
+    assert "best_val_weighted_mse.pt" in record["checkpoints"]
+    assert (written / "best_val_weighted_mse.pt").is_file()
+    assert "val_weighted_mse" in record["best"]
 
 
 def test_crash_mid_loop_does_not_drop_prior_digests(tmp_path: Path, monkeypatch) -> None:

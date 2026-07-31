@@ -97,7 +97,12 @@ THROUGHPUT_WARNING_MS_PER_IMAGE = 10.0
 SHRINKAGE_WARNING_EPOCH = 5
 
 CHECKPOINT_BEST_SHARED = "best_val_mse.pt"
-CHECKPOINT_BEST_OBJECTIVE = "best_val_objective.pt"
+# Named for the quantity it selects on, not for the loop's objective: the
+# weighted error is computed every epoch for every run, so this rule applies
+# to runs whose loss is unweighted too. Runs before this change wrote
+# best_val_objective.pt, which held the weighted error only when the loss was
+# the weighted one -- a name that described the loop rather than the metric.
+CHECKPOINT_BEST_WEIGHTED = "best_val_weighted_mse.pt"
 CHECKPOINT_BEST_F1 = "best_val_f1.pt"
 CHECKPOINT_LAST = "last.pt"
 
@@ -522,7 +527,6 @@ def main() -> None:
 
     # The plain objective and the shared selection metric are the same quantity,
     # so only the weighted run needs a separate objective checkpoint.
-    tracks_separate_objective = isinstance(loss_fn, MaskedWeightedMSELoss)
 
     results_dir = Path(config.output.results_dir) / config.run_name
     checkpoint_dir = results_dir / "checkpoints"
@@ -531,7 +535,7 @@ def main() -> None:
 
     start_epoch = 1
     best_shared = float("inf")
-    best_objective = float("inf")
+    best_weighted = float("inf")
     # F1 is maximised, and it is legitimately zero for the first epochs, so the
     # initial value has to be below any attainable score rather than above it.
     best_f1 = -1.0
@@ -547,7 +551,12 @@ def main() -> None:
         start_epoch = int(state["epoch"]) + 1
         selection = state["selection"]
         best_shared = float(selection["val_mse"])
-        best_objective = float(selection["val_objective"])
+        # Runs started before the rename recorded this under the loop's own
+        # objective; read either, and fall back for a checkpoint that carries
+        # neither rather than crashing on resume.
+        best_weighted = float(
+            selection.get("val_weighted_mse", selection.get("val_objective", float("inf")))
+        )
         best_f1 = float(selection["val_f1"])
 
         prior_record = results_dir / RUN_RECORD
@@ -657,21 +666,20 @@ def main() -> None:
         writer.add_scalar("hotspot/f1", result.counts.f1, epoch)
         writer.add_scalar("throughput/ms_per_image", ms_per_image, epoch)
 
-        objective = result.weighted_mse if tracks_separate_objective else result.mse
         # Strict comparisons, evaluated before the running bests are updated.
         # A tie must not overwrite: hotspot F1 is legitimately zero for many
         # early epochs, and a non-strict test would rewrite the checkpoint on
         # every one of them and end up holding the latest rather than the best.
         improved_shared = result.mse < best_shared
-        improved_objective = objective < best_objective
+        improved_weighted = result.weighted_mse < best_weighted
         improved_f1 = result.counts.f1 > best_f1
 
         best_shared = min(best_shared, result.mse)
-        best_objective = min(best_objective, objective)
+        best_weighted = min(best_weighted, result.weighted_mse)
         best_f1 = max(best_f1, result.counts.f1)
         selection = {
             "val_mse": best_shared,
-            "val_objective": best_objective,
+            "val_weighted_mse": best_weighted,
             "val_f1": best_f1,
         }
 
@@ -690,9 +698,13 @@ def main() -> None:
         else:
             epochs_without_improvement += 1
 
-        if tracks_separate_objective and improved_objective:
-            checkpoints[CHECKPOINT_BEST_OBJECTIVE] = save_checkpoint(
-                checkpoint_dir / CHECKPOINT_BEST_OBJECTIVE,
+        # Written for every run, not only those whose loss is the weighted one.
+        # The metric exists either way; gating the write on the loss is what
+        # left one canonical run with a selection that has no weights and
+        # cannot be recovered, since the epoch was not on the periodic grid.
+        if improved_weighted:
+            checkpoints[CHECKPOINT_BEST_WEIGHTED] = save_checkpoint(
+                checkpoint_dir / CHECKPOINT_BEST_WEIGHTED,
                 model=model,
                 optimizer=optimizer,
                 epoch=epoch,
@@ -779,7 +791,7 @@ def main() -> None:
     }
     record["best"] = {
         "val_mse": best_shared,
-        "val_objective": best_objective,
+        "val_weighted_mse": best_weighted,
         "val_f1": best_f1,
     }
     record["checkpoints"] = checkpoints
