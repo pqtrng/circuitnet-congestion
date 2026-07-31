@@ -466,5 +466,13 @@
         "error_choice_error_over_baseline": 1.186769416341026
       }
     }
+  },
+  "committed_code": {
+    "revisions": [
+      "06554552b030dbbec44e26352a6520cc3d53bda2",
+      "e967988cb185ef8b5e5c15781f759495efa8f9c4"
+    ],
+    "status": "identical",
+    "changed_files": []
   }
 }

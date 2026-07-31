@@ -69,3 +69,6 @@ probe:
 
 probe-test:
 	uv run python -m analysis.probe_test_eval
+
+probe-provenance:
+	uv run python -m analysis.probe_selection_gap --committed-code-only

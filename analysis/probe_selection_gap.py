@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import subprocess
 from pathlib import Path
 from typing import Any
 
@@ -158,10 +159,59 @@ def discover(results_dir: Path) -> list[Path]:
     return sorted(found)
 
 
+def committed_code_comparison(runs: dict[str, Any]) -> dict[str, Any]:
+    """Compare the committed src/configs between the two canonical revisions.
+
+    This runs git once, here, so the rendered document does not: the audit reads
+    the result from this record instead of shelling out at render time, where a
+    shallow clone would make the same document come out differently. A revision
+    that is absent when the probe runs is recorded as unverifiable rather than
+    guessed.
+    """
+    revisions = sorted(
+        {
+            run["git"]["revision"]
+            for run in runs.values()
+            if not run["superseded"] and run.get("git", {}).get("revision")
+        }
+    )
+    record: dict[str, Any] = {"revisions": revisions}
+    if len(revisions) != 2:
+        record["status"] = "not-two-revisions"
+        return record
+    a, b = revisions
+    try:
+        quiet = subprocess.run(
+            ["git", "diff", "--quiet", a, b, "--", "src", "configs"],
+            capture_output=True,
+            text=True,
+        ).returncode
+    except OSError:
+        quiet = None
+    if quiet == 0:
+        record["status"] = "identical"
+        record["changed_files"] = []
+    elif quiet == 1:
+        record["status"] = "differs"
+        record["changed_files"] = subprocess.run(
+            ["git", "diff", "--name-only", a, b, "--", "src", "configs"],
+            capture_output=True,
+            text=True,
+        ).stdout.split()
+    else:
+        record["status"] = "unverifiable"
+    return record
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Compare checkpoint selection rules.")
     parser.add_argument("--results-dir", type=Path, default=RESULTS)
     parser.add_argument("--out", type=Path, default=OUTPUT)
+    parser.add_argument(
+        "--committed-code-only",
+        action="store_true",
+        help="recompute only the committed_code block and merge it into the existing output",
+    )
     parser.add_argument(
         "--run",
         type=Path,
@@ -170,6 +220,13 @@ def main() -> None:
         help="probe a specific run directory; repeatable",
     )
     args = parser.parse_args()
+
+    if args.committed_code_only:
+        existing = json.loads(args.out.read_text())
+        existing["committed_code"] = committed_code_comparison(existing["runs"])
+        args.out.write_text(json.dumps(existing, indent=2) + "\n")
+        print(f"updated committed_code in {args.out}: {existing['committed_code']['status']}")
+        return
 
     run_dirs = args.run if args.run else discover(args.results_dir)
     runs = {}
@@ -182,7 +239,8 @@ def main() -> None:
         raise SystemExit(f"no run histories found under {args.results_dir}")
 
     args.out.parent.mkdir(parents=True, exist_ok=True)
-    args.out.write_text(json.dumps({"runs": runs}, indent=2) + "\n")
+    payload = {"runs": runs, "committed_code": committed_code_comparison(runs)}
+    args.out.write_text(json.dumps(payload, indent=2) + "\n")
     print(f"wrote {args.out}\n")
 
     for name, run in runs.items():

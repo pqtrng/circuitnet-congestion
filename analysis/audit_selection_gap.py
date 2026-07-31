@@ -26,7 +26,6 @@ an F1 near zero is arithmetically large and carries no information.
 from __future__ import annotations
 
 import json
-import subprocess
 from pathlib import Path
 from typing import Any
 
@@ -154,10 +153,9 @@ def _deployable(runs: dict[str, Any]) -> list[str]:
     return lines
 
 
-def _provenance(runs: dict[str, Any]) -> list[str]:
+def _provenance(runs: dict[str, Any], committed_code: dict[str, Any]) -> list[str]:
     canonical = {n: r for n, r in runs.items() if not r["superseded"]}
     lines = ["Provenance of the canonical runs:", ""]
-    revisions = []
     dirty_runs = []
     for name, run_entry in sorted(canonical.items()):
         git = run_entry.get("git")
@@ -167,42 +165,31 @@ def _provenance(runs: dict[str, Any]) -> list[str]:
         rev = git.get("revision", "")
         tree = "dirty worktree" if git.get("dirty") else "clean worktree"
         lines.append(f"  {name}: revision {rev[:10]}, {tree}")
-        revisions.append(rev)
         if git.get("dirty"):
             dirty_runs.append(name)
 
-    distinct = sorted(set(filter(None, revisions)))
-    if len(distinct) == 2:
-        a, b = distinct
-        try:
-            result = subprocess.run(
-                ["git", "diff", "--quiet", a, b, "--", "src", "configs"],
-                capture_output=True,
-                text=True,
-            )
-            code = result.returncode
-        except OSError:
-            code = None
+    # The comparison is measured once by the probe and read here, so this
+    # renders identically in any clone -- a git call at render time would make
+    # a shallow clone produce a different document.
+    status = committed_code.get("status")
+    revisions = committed_code.get("revisions", [])
+    if len(revisions) == 2:
+        a, b = (r[:10] for r in revisions)
         lines.append("")
-        if code == 0:
+        if status == "identical":
             lines.append(
                 "The committed training code is identical between the two revisions: "
-                f"`git diff {a[:10]} {b[:10]} -- src configs` is empty."
+                f"`git diff {a} {b} -- src configs` is empty."
             )
-        elif code == 1:
-            names = subprocess.run(
-                ["git", "diff", "--name-only", a, b, "--", "src", "configs"],
-                capture_output=True,
-                text=True,
-            ).stdout.split()
+        elif status == "differs":
+            names = committed_code.get("changed_files", [])
             lines.append(
                 "The committed training code DIFFERS between the two revisions: " + ", ".join(names)
             )
         else:
             lines.append(
-                "The committed-code comparison is unverifiable in this clone: one or "
-                "both revisions are not present (shallow or partial clone). Run "
-                f"`git diff {a[:10]} {b[:10]} -- src configs` in a full clone."
+                "The committed-code comparison was not recorded as resolved when the probe ran: "
+                f"one or both revisions were absent. Run `git diff {a} {b} -- src configs`."
             )
     for name in dirty_runs:
         lines.append(
@@ -214,7 +201,9 @@ def _provenance(runs: dict[str, Any]) -> list[str]:
 
 
 def run() -> str:
-    runs = json.loads(PROBE.read_text())["runs"]
+    record = json.loads(PROBE.read_text())
+    runs = record["runs"]
+    committed_code = record.get("committed_code", {})
 
     lines: list[str] = [
         "Selection disagreement (metric-only). Epochs are selected by post-hoc",
@@ -227,7 +216,7 @@ def run() -> str:
         lines.append("")
     lines.extend(_deployable(runs))
     lines.append("")
-    lines.extend(_provenance(runs))
+    lines.extend(_provenance(runs, committed_code))
     lines.append("")
 
     substantial = [
