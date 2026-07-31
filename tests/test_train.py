@@ -465,3 +465,39 @@ def test_resume_preserves_digests_from_earlier_sessions(tmp_path: Path, monkeypa
 
     assert "epoch_002.pt" in record["checkpoints"]
     assert record["checkpoints"]["last.pt"]["epoch"] == 3
+
+
+def test_crash_mid_loop_does_not_drop_prior_digests(tmp_path: Path, monkeypatch) -> None:
+    """The clean-resume test above cannot see this failure: the record is
+    rewritten before the epoch loop, and until the fix it was rewritten from a
+    fresh dict without the checkpoints key, so a session that crashed inside
+    the loop left run.json on disk with every earlier digest gone. Weights are
+    excluded from the repository; a file whose digest is dropped is a file no
+    reported number can be traced to, permanently."""
+    gold = _write_gold(tmp_path)
+    config_path = _write_config(tmp_path, gold, epochs=2, name="crashy")
+    config_path.write_text(
+        config_path.read_text().replace(
+            "  tensorboard_dir:", "  checkpoint_every: 2\n  tensorboard_dir:"
+        )
+    )
+
+    monkeypatch.setattr(sys, "argv", ["train", "--config", str(config_path)])
+    train_module.main()
+    before = json.loads((tmp_path / "results" / "crashy" / "run.json").read_text())
+    assert "epoch_002.pt" in before["checkpoints"]
+
+    def explode(*args, **kwargs):
+        raise RuntimeError("simulated crash inside the epoch loop")
+
+    monkeypatch.setattr(train_module, "train_one_epoch", explode)
+    monkeypatch.setattr(
+        sys, "argv", ["train", "--config", str(config_path), "--epochs", "3", "--resume"]
+    )
+    with pytest.raises(RuntimeError, match="simulated crash"):
+        train_module.main()
+
+    after = json.loads((tmp_path / "results" / "crashy" / "run.json").read_text())
+    assert "epoch_002.pt" in after.get("checkpoints", {}), (
+        "digests from earlier sessions were dropped by the pre-loop record write"
+    )

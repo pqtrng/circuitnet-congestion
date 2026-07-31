@@ -606,6 +606,12 @@ def main() -> None:
                 "one of them would report a choice rather than a result."
             ),
         },
+        # Digests carried over from an earlier session belong in the record from
+        # its first write, not only after the loop. This file is rewritten here,
+        # before any epoch runs; a crash inside the loop leaves that version on
+        # disk, and a version written without these entries destroys the only
+        # link between weights already on disk and the numbers they produced.
+        "checkpoints": checkpoints,
     }
     (results_dir / RUN_RECORD).write_text(json.dumps(record, indent=2) + "\n")
 
