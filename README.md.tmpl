@@ -84,7 +84,12 @@ regenerates both documents on a fresh clone with no data and no accelerator.
 of continuous integration.
 
 Model weights are excluded from the repository. Every run record stores a SHA-256 per checkpoint alongside the git
-revision and whether the worktree was clean, so a reported number can be traced to the weights that produced it.
+revision and whether the worktree was clean, so a reported number can be traced to the weights that produced it -- and
+the weights themselves are published in the [`model-v1`](../../releases/tag/model-v1) release, five files covering every
+selection rule that still has them, verifiable against those digests with `sha256sum -c SHA256SUMS`. What is not there:
+`unet_a`'s weighted-error selection, whose checkpoint write was gated off at the time, and every selection in the three
+superseded runs, whose files were deleted after their digests were recorded.
+`docs/training_decisions.md` renders which selections are loadable and which survive as metrics only.
 
 ## Layout
 
