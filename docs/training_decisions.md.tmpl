@@ -248,3 +248,45 @@ without those, a reported number has no link to the model that produced it.
   directly, but the uncommitted difference was not captured and cannot be
   recovered. The independent variable in that comparison is the loss
   configuration plus an unquantified delta.
+
+## Open questions
+
+Limitations records what this evidence cannot support. This records what would
+settle each open point and what it would cost, in the unit the next line
+defines.
+
+<!--AUDIT:run_budget-->
+
+**Does half precision actually fail on a trained model?** Section 4 withdrew two
+claims that it does: the records behind them were not retained, and the probe
+that replaced them measured the model at initialisation, where a zero-output
+head makes every error a squared target and tells you nothing about a converged
+one. What settles it is running the same precision probe from a published
+checkpoint rather than from initialisation. Cost: far below one run-budget --
+it is a handful of forward passes, no training -- which is why the question is
+open by oversight rather than by expense.
+
+**Does the selection gap survive across seeds?** Section 6 is the project's
+central result and it rests on one seed per configuration, so the gap between
+the error rule and the F1 rule could in principle be an artefact of a single
+initialisation. What settles it is repeating both baselines under a set of
+seeds and measuring the gap in each. Cost: two run-budgets per seed, so a
+k-seed answer is 2k run-budgets -- the most expensive question here, and the
+one whose answer the headline most depends on.
+
+**Does the learning-rate ranking hold at scale?** The sweep behind section 5
+fits thirty-two patches full-batch. Mini-batch gradient noise over the whole
+training split is a different optimisation problem, so a rate that is stable on
+the subset is not thereby stable on the full run. What settles it is re-running
+the ranking as mini-batch training over the full split. Cost: a few run-budgets
+-- one partial run per candidate rate, short of full convergence, since the
+ranking is visible well before the budget is spent.
+
+**What does the test split say?** No model output has touched it; only its
+target statistics have, and section 6's argument is entirely on validation. The
+test row of the blind-spot table already shows its target is denser than
+validation's, so the two splits are not interchangeable and test is not
+obviously the easier of them. What settles it is a single evaluation pass of the
+published checkpoints over test. Cost: far below one run-budget, and it is the
+next task regardless; it is listed here because until it runs, every number in
+this repository is a validation number.

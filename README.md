@@ -153,8 +153,12 @@ JSON. That separation is what lets the documents regenerate anywhere.
 
 ## Open questions
 
-- Does the selection gap survive across seeds, and how wide is its variance?
-- Does a threshold-aware objective close the gap, or only move it?
+`docs/training_decisions.md` states, for each unresolved point, what would settle it and what it would cost in
+run-budgets: whether half precision fails on a trained checkpoint, whether the selection gap survives seed variation,
+whether the learning-rate ranking holds at full-batch scale, and what the unevaluated test split says. Two further
+design questions live only here:
+
+- Does a threshold-aware objective close the selection gap, or only move it?
 - The horizontal/vertical merge takes a per-pixel maximum, following common practice but discarding direction. Both maps
   are retained at Bronze so an alternative merge can be evaluated without re-ingesting.
 
