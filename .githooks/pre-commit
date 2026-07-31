@@ -1,0 +1,6 @@
+#!/bin/sh
+# Lint gate, matching the first two CI steps. The formatter check had been
+# failing in CI for several commits while the local routine ran pytest alone.
+set -e
+uv run ruff check .
+uv run ruff format --check .

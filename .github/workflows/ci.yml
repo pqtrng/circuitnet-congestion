@@ -8,10 +8,12 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v3
+        # setup-uv stopped publishing floating major tags, so this is
+        # pinned to an immutable release rather than a moving reference.
+        uses: astral-sh/setup-uv@v9.0.0
 
       - name: Set up Python
         run: uv python install 3.12

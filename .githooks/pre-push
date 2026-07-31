@@ -1,0 +1,4 @@
+#!/bin/sh
+# Test gate, matching the CI test step, so a red push is caught before it is public.
+set -e
+uv run pytest -q
