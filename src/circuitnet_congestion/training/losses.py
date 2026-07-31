@@ -237,6 +237,16 @@ class MaskedMeanAccumulator:
         self.weight += float(count)
 
     def compute(self) -> float:
+        """The masked mean, or zero if nothing was accumulated.
+
+        Zero is a legitimate value of this metric, so the empty return is
+        indistinguishable from a perfect one -- and unlike the maximum tracked
+        in metrics.py, it errs towards reporting success. Callers that cannot
+        assume a non-empty epoch must test ``weight`` rather than the result;
+        the training loop can, because every batch of the gold layer carries
+        valid pixels. This branch existing at all is a guard against dividing
+        by zero, not a value worth reporting.
+        """
         if self.weight == 0.0:
             return 0.0
         return self.total / self.weight

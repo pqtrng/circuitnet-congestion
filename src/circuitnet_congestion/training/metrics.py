@@ -28,6 +28,14 @@ def masked_max(values: torch.Tensor, mask: torch.Tensor) -> torch.Tensor:
     Tracked every epoch as the cheapest possible shrinkage alarm: a prediction
     whose maximum stays below the hotspot threshold has collapsed to a smooth
     field regardless of what the loss curve shows.
+
+    The empty-mask return is zero, which is inside the range of legitimate
+    results rather than outside it -- unlike the best-F1 sentinel, which is
+    negative precisely so that no real score can be mistaken for it. Zero is
+    tolerable here only because of which way it errs: it reads as a collapsed
+    prediction and trips the alarm rather than silencing it. It is not
+    reachable with the gold layer, whose least-covered patch still has valid
+    pixels; a batch of pure padding would mean the loader is wrong.
     """
     neutral = torch.full_like(values, torch.finfo(values.dtype).min)
     largest = torch.where(mask > 0, values, neutral).max()

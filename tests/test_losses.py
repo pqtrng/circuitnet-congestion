@@ -207,13 +207,19 @@ def test_accumulator_weights_batches_by_valid_pixels_not_by_batch() -> None:
 
 
 def test_accumulator_reset_and_empty_state() -> None:
+    """The empty result is zero, which this metric can also legitimately take,
+    so the only reliable emptiness test is the accumulated weight. Asserting
+    both keeps the ambiguity visible instead of implying the value carries it.
+    """
     accumulator = MaskedMeanAccumulator()
+    assert accumulator.weight == 0.0
     assert accumulator.compute() == 0.0
 
     accumulator.update(torch.ones(1, 1, 2, 2), torch.ones(1, 1, 2, 2))
     assert accumulator.compute() == pytest.approx(1.0)
 
     accumulator.reset()
+    assert accumulator.weight == 0.0
     assert accumulator.compute() == 0.0
 
 

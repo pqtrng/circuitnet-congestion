@@ -39,6 +39,9 @@ def test_masked_max_handles_negative_values() -> None:
 
 
 def test_masked_max_of_an_empty_mask_is_zero() -> None:
+    """Zero is inside this quantity's legitimate range, so the empty case is
+    not distinguishable from a genuinely zero maximum. It is kept because it
+    errs towards tripping the shrinkage alarm rather than silencing it."""
     values = torch.randn(1, 1, 4, 4)
 
     assert masked_max(values, torch.zeros(1, 1, 4, 4)).item() == 0.0
