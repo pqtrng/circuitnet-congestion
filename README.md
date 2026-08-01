@@ -162,7 +162,9 @@ JSON. That separation is what lets the documents regenerate anywhere.
 
 ## Limitations
 
-- **The test split has not been evaluated.** Nothing here is a generalisation claim.
+- **Generalisation is measured from a single held-out design.** The published checkpoints were scored on the test split
+  exactly once, and no test statistic informed any training or selection decision — but one design is very few
+  independent points.
 - Every result comes from a single seed. No claim is made about seed variance, including for the selection gap above.
 - Checkpoints are selected on validation, which is the sparsest split by a wide margin — model selection happens on a
   distribution unlike the one the model will be scored against. This is not corrected for.
@@ -177,9 +179,10 @@ JSON. That separation is what lets the documents regenerate anywhere.
 
 `docs/training_decisions.md` states, for each unresolved point, what would settle it and what it would cost in
 run-budgets: whether half precision fails on a trained checkpoint, whether the selection gap survives seed variation,
-whether the learning-rate ranking holds at full-batch scale, and what the unevaluated test split says. Two further
-design questions live only here:
+and whether the learning-rate ranking holds at full-batch scale. Three further design questions live only here:
 
+- The test evaluation ties the pixel metric's blind spot to target sparsity. Does the selection gap persist with the
+  splits' roles reversed — checkpoints selected on the dense design and scored on the sparse one?
 - Does a threshold-aware objective close the selection gap, or only move it?
 - The horizontal/vertical merge takes a per-pixel maximum, following common practice but discarding direction. Both maps
   are retained at Bronze so an alternative merge can be evaluated without re-ingesting.

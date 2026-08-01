@@ -193,8 +193,9 @@ without those, a reported number has no link to the model that produced it.
 - Every result here comes from a single seed per configuration. No claim is made
   about variance across seeds, and the selection gap in section 6 has not been
   measured against seed variation.
-- No model output has touched the test split, but two of its target statistics
-  have been computed and were cited in design rationales: the count of pixels
+- Until the evaluation reported in the final section, no model output had
+  touched the test split, but two of its target statistics had been computed and
+  were cited in design rationales: the count of pixels
   sitting exactly on the threshold, in the argument for evaluating a range of
   thresholds, and the distinct-level count, in the argument that no threshold
   sits in a gap. Both rationales are now anchored to the training split, with
@@ -281,15 +282,6 @@ the subset is not thereby stable on the full run. What settles it is re-running
 the ranking as mini-batch training over the full split. Cost: a few run-budgets
 -- one partial run per candidate rate, short of full convergence, since the
 ranking is visible well before the budget is spent.
-
-**What does the test split say?** No model output has touched it; only its
-target statistics have, and section 6's argument is entirely on validation. The
-test row of the blind-spot table already shows its target is denser than
-validation's, so the two splits are not interchangeable and test is not
-obviously the easier of them. What settles it is a single evaluation pass of the
-published checkpoints over test. Cost: far below one run-budget, and it is the
-next task regardless; it is listed here because until it runs, every number in
-this repository is a validation number.
 
 ## Test evaluation
 
