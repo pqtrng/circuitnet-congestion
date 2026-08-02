@@ -15,7 +15,9 @@ validation number: no test statistic informs a choice, which is a rule the decis
 
 ## The finding
 
-On this target, the metric used to select a checkpoint changes the resulting model more than the loss function does.
+On this target the checkpoint-selection rule is a confound of the same order as the loss function -- swapping the rule
+within a run moves hotspot F1 by a factor comparable to swapping the loss between them -- and unlike the loss, nothing
+in the training curve reveals it.
 
 | run | selected by | epoch | pixel error / zero-predictor | hotspot precision | recall | F1 |
 |---|---|---|---|---|---|---|
