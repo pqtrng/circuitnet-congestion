@@ -45,4 +45,4 @@ results/smoke_*/
 *.log
 
 # Superseded runs are evidence for the decision record; keep their logs.
-!results/superseded/*.log
+!results/superseded/*.logtrain_ab_*.log
