@@ -1,7 +1,7 @@
 [project]
 name = "circuitnet-congestion"
 version = "0.1.0"
-description = "Routing congestion prediction on CircuitNet-N28, with a data-engineering-first pipeline and honest evaluation."
+description = "Routing congestion prediction on CircuitNet-N14, with a data-engineering-first pipeline and honest evaluation."
 readme = "README.md"
 authors = [
     { name = "pqtrng", email = "72325861+pqtrng@users.noreply.github.com" }
